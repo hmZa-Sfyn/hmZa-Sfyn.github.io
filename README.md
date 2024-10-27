@@ -27,7 +27,7 @@ This GitHub Pages site is where I showcase my epic projects, mind-blowing progra
 ## 💬 Connect with Me
 
 - **Email**: Send a digital owl to `hamzasufyanmacrohard@gmail.com` 📧🦉
-- **Patreon**: Support my madness at [patreon.com/akaHamzaS](https://www.patreon.com/akaHamzaS) 💸✨
+- **Patreon**: Support my madness at [patreon.com/akaHamzaS](https://www.patreon.com/akaYuri) 💸✨
 
 ## 📢 Call to Action
 
