@@ -52,3 +52,6 @@ Thanks for stopping by! Enjoy the site, learn, and remember: coding is meant to 
 ---
 
 **Disclaimer**: Any resemblance to real persons, living or dead, is purely coincidental. No keyboards were harmed in the making of this site. ⌨️❤️
+
+**TODO:**
+- https://hmza-sfyn.github.io/sideprojects_idk/blockchain_view_controller/index.html
