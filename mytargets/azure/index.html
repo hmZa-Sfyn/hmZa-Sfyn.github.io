@@ -1,9 +1,225 @@
-<!DOCTYPE html><html lang="en"> <head><meta charset="UTF-8"><meta name="description" content="hmZa's Portfolio - Programmer & Pentester"><meta name="viewport" content="width=device-width"><link rel="icon" type="image/png" href="favicon.png"><meta name="generator" content="Astro v4.16.18"><title>Azure - Bug Bounty Details</title><style>.target-details[data-astro-cid-nslgbbqd]{max-width:980px;padding:2rem}h1[data-astro-cid-nslgbbqd]{color:var(--accent);display:flex;align-items:center;gap:1rem;margin-bottom:2rem}.logo[data-astro-cid-nslgbbqd]{font-size:2rem}.section[data-astro-cid-nslgbbqd]{background:var(--bg-secondary);padding:1.5rem;border-radius:6px;border:1px solid var(--border);margin-bottom:1.5rem}h2[data-astro-cid-nslgbbqd]{color:var(--accent);margin-bottom:1rem}.bounty[data-astro-cid-nslgbbqd] .amount[data-astro-cid-nslgbbqd]{color:#0f0;font-size:1.5rem;font-weight:700}ul[data-astro-cid-nslgbbqd]{list-style:none}ul[data-astro-cid-nslgbbqd] li[data-astro-cid-nslgbbqd]:before{content:">";color:var(--accent);margin-right:.5rem}
-header[data-astro-cid-3ef6ksr2]{background:var(--bg-secondary);border-bottom:1px solid var(--border);padding:1rem;position:sticky;top:0;z-index:100}nav[data-astro-cid-3ef6ksr2]{max-width:1200px;margin:0 auto;display:flex;justify-content:space-between;align-items:center}.ascii-logo[data-astro-cid-3ef6ksr2]{color:var(--accent);font-size:.8rem;margin:0}ul[data-astro-cid-3ef6ksr2]{display:flex;gap:2rem;list-style:none}a[data-astro-cid-3ef6ksr2]{color:var(--text-primary);text-decoration:none;transition:color .3s}a[data-astro-cid-3ef6ksr2]:hover{color:var(--accent)}footer[data-astro-cid-sz7xmlte]{background:var(--bg-secondary);border-top:1px solid var(--border);padding:2rem;margin-top:4rem}.footer-content[data-astro-cid-sz7xmlte]{max-width:1200px;margin:0 auto;text-align:center}.social[data-astro-cid-sz7xmlte]{margin-bottom:1rem}.social[data-astro-cid-sz7xmlte] a[data-astro-cid-sz7xmlte]{color:var(--accent);text-decoration:none;margin:0 1rem}.social[data-astro-cid-sz7xmlte] a[data-astro-cid-sz7xmlte]:hover{text-decoration:underline}.copyright[data-astro-cid-sz7xmlte]{color:var(--text-secondary);font-size:.9rem}.joke-bar[data-astro-cid-exmcm4kp]{background:var(--accent);color:var(--bg-primary);padding:.5rem;text-align:center;font-weight:700;position:fixed;width:100%;top:0;z-index:1000;margin-bottom:50px;padding-bottom:20px}:root{--bg-primary: #0d1117;--bg-secondary: #161b22;--text-primary: #c9d1d9;--text-secondary: #8b949e;--accent: #58a6ff;--border: #30363d}*{margin:0;padding:0;box-sizing:border-box}body{font-family:Consolas,Monaco,Lucida Console,monospace;background:var(--bg-primary);color:var(--text-primary);line-height:1.6}.hack{position:relative}.hack:before{content:"";position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.15) 0px,rgba(0,0,0,.15) 1px,transparent 1px,transparent 2px);z-index:1}main{max-width:1200px;margin:2rem auto;padding:0 1rem;position:relative;z-index:2}code{font-family:Consolas,monospace;background:var(--bg-secondary);padding:.2em .4em;border-radius:3px;border:1px solid var(--border)}.ascii-art{font-family:monospace;white-space:pre;color:var(--accent);margin:1rem 0}.terminal{background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;padding:1rem;margin:1rem 0}.terminal:before{content:"$ ";color:var(--accent)}
-</style></head> <body class="hack"> <div class="joke-bar" style="margin-bottom:30px;" data-astro-cid-exmcm4kp> <p data-astro-cid-exmcm4kp>Why do programmers hate nature? It’s full of bugs! 🐞</p> </div> <br data-astro-cid-exmcm4kp>  <header data-astro-cid-3ef6ksr2> <nav data-astro-cid-3ef6ksr2> <div class="logo" data-astro-cid-3ef6ksr2> <pre class="ascii-logo" data-astro-cid-3ef6ksr2> _                _____      
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="description" content="hmZa's Portfolio - Target: Azure">
+    <meta name="viewport" content="width=device-width">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <meta name="generator" content="Astro v4.16.18">
+    <title>Target: Azure - hmZa</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #fdfbf7;
+            --bg-secondary: #f5f1e9;
+            --text-primary: #333333;
+            --text-secondary: #555555;
+            --accent: #c0a062;
+            --border-color: #e0dccc;
+            --shadow-color: rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Lato', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAMAAAAp4XiDAAAAUVBMVEWFhYWDg4N3d3dtbW17e3t1dXVAAAAacXJUPEBFQkZUT0tPTE1OT09VU1NXVlZZWFiPj4+NjY2SkpKTk5OVlZWWlpaZmZmfn598fHzOzs7Nzc2Li4tZWFlaW1vKysqHh4fX19fJycnNzc2Pj49lZWVsbGx4eXp8fH1bXl8OQhjjAAAANElEQVR42u3OSQEAAAgDMCdfpG8Y2Ab4zW33sQ4u3gO4eA/g4j2Ai/cALt4DuHh/84eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f7A4eA4/f-');
+        }
+
+        h1, h2, h3 {
+            font-family: 'Merriweather', serif;
+            color: var(--text-primary);
+        }
+
+        a {
+            color: var(--accent);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        a:hover {
+            color: var(--text-primary);
+        }
+
+        header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 4px var(--shadow-color);
+        }
+
+        nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .ascii-logo {
+            color: var(--accent);
+            font-size: .8rem;
+            margin: 0;
+            font-family: monospace;
+            white-space: pre;
+        }
+
+        nav ul {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        main {
+            max-width: 980px;
+            margin: 4rem auto;
+            padding: 0 2rem;
+        }
+
+        footer {
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            padding: 3rem 2rem;
+            margin-top: 4rem;
+            text-align: center;
+        }
+
+        .footer-content .social a {
+            margin: 0 1rem;
+        }
+        
+        .copyright {
+            margin-top: 1rem;
+            color: var(--text-secondary);
+            font-size: .9rem;
+        }
+
+        /* Page-specific styles */
+        .target-details h1 {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            font-size: 2.5rem;
+        }
+
+        .section {
+            background: var(--bg-secondary);
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 5px var(--shadow-color);
+        }
+
+        .section h2 {
+            color: var(--accent);
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+
+        .bounty .amount {
+            color: var(--accent);
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .section ul {
+            list-style: none;
+        }
+
+        .section ul li::before {
+            content: '»';
+            color: var(--accent);
+            margin-right: 0.5rem;
+        }
+        
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <div class="logo">
+                <pre class="ascii-logo">
+ _                _____      
 | |__  _ __ ___  |__  /__ _ 
 | '_ \| '_ ` _ \   / // _` |
 | | | | | | | | | / /| (_| |
 |_| |_|_| |_| |_|/____\__,_|
-      </pre> </div> <ul data-astro-cid-3ef6ksr2> <li data-astro-cid-3ef6ksr2> <a href="/" data-astro-cid-3ef6ksr2>Home</a> </li><li data-astro-cid-3ef6ksr2> <a href="/about" data-astro-cid-3ef6ksr2>About</a> </li><li data-astro-cid-3ef6ksr2> <a href="/projects" data-astro-cid-3ef6ksr2>Projects</a> </li><li data-astro-cid-3ef6ksr2> <a href="https://dev.to/hmzas" data-astro-cid-3ef6ksr2>Blog</a> </li><li data-astro-cid-3ef6ksr2> <a href="/mytargets" data-astro-cid-3ef6ksr2>MyTargets</a> </li> </ul> </nav> </header>  <main>  <div class="target-details" data-astro-cid-nslgbbqd> <h1 data-astro-cid-nslgbbqd>Target<p style="color:rgb(139, 139, 139)" data-astro-cid-nslgbbqd>-></p>Azure</h1> <div class="flex" style="display:flex;margin-bottom:12px;" data-astro-cid-nslgbbqd> <div class="flex" style="margin-bottom:12px;margin:10px;" data-astro-cid-nslgbbqd> <div class="section" style="min-height: 148px;" data-astro-cid-nslgbbqd> <h2 data-astro-cid-nslgbbqd>So what we got?</h2> <p data-astro-cid-nslgbbqd>Microsoft&#39;s cloud platform that’s exciting to explore for security gaps.</p> </div> <div class="section" style="min-height: 148px;" data-astro-cid-nslgbbqd> <h2 data-astro-cid-nslgbbqd>Why?</h2> <p data-astro-cid-nslgbbqd>I was curious if sensitive data or keys were left exposed in the cloud.</p> </div> <div class="section bounty" style="min-height: 148px;" data-astro-cid-nslgbbqd> <h2 data-astro-cid-nslgbbqd>Bounty Earned</h2> <p class="amount" data-astro-cid-nslgbbqd>$Undisclosed</p> </div> </div> <div class="flex" style="margin-bottom:12px;" data-astro-cid-nslgbbqd> <div class="section" style="width: 100%;margin:10px;" data-astro-cid-nslgbbqd> <h2 data-astro-cid-nslgbbqd>How?</h2> <p data-astro-cid-nslgbbqd>API Key Leaks, XSS</p> </div> <div class="section" style="width: 100%;margin:10px;" data-astro-cid-nslgbbqd> <h2 data-astro-cid-nslgbbqd>Tools?</h2> <ul data-astro-cid-nslgbbqd> <li data-astro-cid-nslgbbqd>Burp Suite</li><li data-astro-cid-nslgbbqd>Custom Scripts</li> </ul> </div> </div> </div> </div>  </main> <footer data-astro-cid-sz7xmlte> <div style="display:flex" data-astro-cid-sz7xmlte> <div class="footer-content" data-astro-cid-sz7xmlte> <div class="social" data-astro-cid-sz7xmlte> <a href="https://github.com/hmZa-Sfyn" target="_blank" data-astro-cid-sz7xmlte>GitHub</a> <a href="https://hmza-sfyn.github.io/" target="_blank" data-astro-cid-sz7xmlte>Website</a> <a href="https://dev.to/hmzas" target="_blank" data-astro-cid-sz7xmlte>Blog</a> <a href="/projects" data-astro-cid-sz7xmlte>Projects</a> </div> <div class="social" data-astro-cid-sz7xmlte> <a href="/bd/jokes" target="_blank" data-astro-cid-sz7xmlte>Jokes.List</a> </div> <div class="ascii-art" data-astro-cid-sz7xmlte> <pre data-astro-cid-sz7xmlte>    ¯\_(ツ)_/¯
-        </pre> </div> <p class="copyright" data-astro-cid-sz7xmlte>&copy; 2008~2025 <a href="https://github.com/hmZa-Sfyn" style="color:white;" data-astro-cid-sz7xmlte>hmZa</a>. All bugs intended.</p> </div> </div> </footer>  </body></html> 
+                </pre>
+            </div>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/about">About</a></li>
+                <li><a href="/projects">Projects</a></li>
+                <li><a href="https://blog.hmza.vercel.app/">Blog</a></li>
+                <li><a href="/contact">Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="target-details">
+            <h1>Target: Azure</h1>
+            <div class="details-grid">
+                <div class="section">
+                    <h2>Description</h2>
+                    <p>Microsoft's cloud platform, an exciting environment to explore for security gaps.</p>
+                </div>
+                <div class="section">
+                    <h2>Motivation</h2>
+                    <p>Curiosity about sensitive data or API keys potentially exposed in cloud configurations.</p>
+                </div>
+                <div class="section bounty">
+                    <h2>Bounty Earned</h2>
+                    <p class="amount">Undisclosed</p>
+                </div>
+                <div class="section">
+                    <h2>Vulnerabilities Found</h2>
+                    <ul>
+                        <li>API Key Leaks</li>
+                        <li>Cross-Site Scripting (XSS)</li>
+                    </ul>
+                </div>
+                <div class="section">
+                    <h2>Tools Used</h2>
+                    <ul>
+                        <li>Burp Suite</li>
+                        <li>Custom Scripts</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="social">
+                <a href="https://github.com/hmZa-Sfyn" target="_blank">GitHub</a>
+                <a href="https://hmza-sfyn.github.io/" target="_blank">Website</a>
+                <a href="https://blog.hmza.vercel.app/" target="_blank">Blog</a>
+                <a href="/projects">Projects</a>
+            </div>
+            <p class="copyright">&copy; 2008~2025 hmZa. All bugs intended.</p>
+        </div>
+    </footer>
+</body>
+</html>
