@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GOD TIER CHAT — Terminal Client</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #000;
+      color: #0f0;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      line-height: 1.4;
+      height: 100vh;
+      overflow: hidden;
+    }
+    #terminal {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      padding: 10px;
+      background: #000;
+    }
+    #header {
+      display: flex;
+      justify-content: space-between;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #0f0;
+      margin-bottom: 10px;
+    }
+    #title {
+      font-weight: bold;
+      font-size: 18px;
+    }
+    #tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    .tab {
+      padding: 4px 8px;
+      cursor: pointer;
+      border: 1px solid #080;
+      background: #020;
+    }
+    .tab.active {
+      background: #0f0;
+      color: #000;
+    }
+    #chat-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      background: #000;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    .message {
+      margin-bottom: 6px;
+    }
+    .sender { font-weight: bold; color: #0a0; }
+    .system { color: #888; }
+    .error { color: #f44; }
+    .private { color: #08f; }
+    .admin { color: #f80; font-weight: bold; }
+    .preview {
+      margin-top: 6px;
+      padding: 6px;
+      border: 1px dashed #080;
+      max-width: 100%;
+    }
+    .preview img, .preview video {
+      max-width: 100%;
+      max-height: 300px;
+    }
+    .preview a {
+      color: #0af;
+      text-decoration: underline;
+    }
+    #input-area {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    #message-input {
+      flex: 1;
+      background: #000;
+      color: #0f0;
+      border: 1px solid #080;
+      padding: 8px;
+      font-family: inherit;
+      font-size: 14px;
+    }
+    #send-btn {
+      background: #080;
+      color: #000;
+      border: none;
+      padding: 0 16px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    #settings-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.9);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: #020;
+      border: 1px solid #0f0;
+      padding: 20px;
+      width: 90%;
+      max-width: 500px;
+    }
+    .modal-content h3 {
+      margin-bottom: 15px;
+      color: #0f0;
+    }
+    .form-group {
+      margin-bottom: 12px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 4px;
+    }
+    .form-group input {
+      width: 100%;
+      background: #000;
+      color: #0f0;
+      border: 1px solid #080;
+      padding: 6px;
+      font-family: inherit;
+    }
+    .modal-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 15px;
+    }
+    .modal-buttons button {
+      padding: 6px 12px;
+      background: #080;
+      color: #000;
+      border: none;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="terminal">
+    <div id="header">
+      <span id="title">GOD TIER CHAT v14.5</span>
+      <button id="settings-btn">⚙️ Settings</button>
+    </div>
+
+    <div id="tabs">
+      <div class="tab active" data-target="public">🌐 Public</div>
+    </div>
+
+    <div id="chat-container"></div>
+
+    <div id="input-area">
+      <input type="text" id="message-input" placeholder="Type message or ?help" autocomplete="off" />
+      <button id="send-btn">SEND</button>
+    </div>
+  </div>
+
+  <div id="settings-modal">
+    <div class="modal-content">
+      <h3>⚙️ Settings</h3>
+      <div class="form-group">
+        <label>Username (guest only)</label>
+        <input type="text" id="new-username" placeholder="New username" maxlength="20" />
+      </div>
+      <div class="form-group">
+        <label>Avatar URL (image/GIF)</label>
+        <input type="text" id="new-avatar" placeholder="https://example.com/avatar.png" maxlength="200" />
+      </div>
+      <div class="modal-buttons">
+        <button id="close-settings">Cancel</button>
+        <button id="apply-settings">Apply</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ======================
+    // CONFIG
+    // ======================
+    const WS_URL = "ws://217.160.125.127:13345";
+    let socket = null;
+    let currentUser = "Guest";
+    let currentTab = "public";
+    const tabs = new Set(["public"]);
+    const dmSenders = new Set();
+
+    // DOM Elements
+    const chatContainer = document.getElementById("chat-container");
+    const messageInput = document.getElementById("message-input");
+    const sendBtn = document.getElementById("send-btn");
+    const tabsContainer = document.getElementById("tabs");
+    const settingsModal = document.getElementById("settings-modal");
+    const settingsBtn = document.getElementById("settings-btn");
+    const closeSettings = document.getElementById("close-settings");
+    const applySettings = document.getElementById("apply-settings");
+    const newUsernameInput = document.getElementById("new-username");
+    const newAvatarInput = document.getElementById("new-avatar");
+
+    // ======================
+    // UTILS
+    // ======================
+    function logMessage(html, tab = "public") {
+      if (!tabs.has(tab)) {
+        addTab(tab);
+      }
+      if (tab === currentTab) {
+        chatContainer.innerHTML += html;
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }
+    }
+
+    function addTab(name) {
+      tabs.add(name);
+      const tab = document.createElement("div");
+      tab.className = "tab";
+      tab.dataset.target = name;
+      tab.textContent = name.startsWith("@") ? `💬 ${name}` : name;
+      tab.onclick = () => switchTab(name);
+      tabsContainer.appendChild(tab);
+    }
+
+    function switchTab(name) {
+      currentTab = name;
+      document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.target === name));
+      chatContainer.innerHTML = ""; // Clear
+      // In a real app, you'd cache history — for simplicity, we don't
+    }
+
+    function isMediaUrl(url) {
+      return /\.(jpg|jpeg|png|gif|webp|mp4|webm|ogg)$/i.test(url);
+    }
+
+    function isImageUrl(url) {
+      return /\.(jpg|jpeg|png|gif|webp)$/i.test(url);
+    }
+
+    function isVideoUrl(url) {
+      return /\.(mp4|webm|ogg)$/i.test(url);
+    }
+
+    async function fetchLinkPreview(url) {
+      try {
+        const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+        const res = await fetch(proxy);
+        const data = await res.json();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(data.contents, "text/html");
+        const title = doc.querySelector("title")?.innerText || url;
+        const icon = doc.querySelector("link[rel*='icon']")?.href || "/favicon.ico";
+        const absIcon = new URL(icon, url).href;
+        return { title, icon: absIcon };
+      } catch (e) {
+        return { title: url, icon: null };
+      }
+    }
+
+    function renderPreview(text) {
+      const urlRegex = /https?:\/\/[^\s<>"{}|\\^`\[\]]+/gi;
+      const urls = text.match(urlRegex);
+      if (!urls) return "";
+
+      let previewHtml = "";
+      for (const url of urls) {
+        if (isMediaUrl(url)) {
+          if (isImageUrl(url)) {
+            previewHtml += `<div class="preview"><img src="${url}" alt="Image" loading="lazy"></div>`;
+          } else if (isVideoUrl(url)) {
+            previewHtml += `<div class="preview"><video controls src="${url}" preload="metadata"></video></div>`;
+          }
+        } else {
+          // Try to fetch title/favicon
+          fetchLinkPreview(url).then(({ title, icon }) => {
+            const iconHtml = icon ? `<img src="${icon}" width="16" height="16" style="vertical-align:middle;margin-right:4px;">` : "";
+            const el = document.createElement("div");
+            el.className = "preview";
+            el.innerHTML = `<a href="${url}" target="_blank">${iconHtml}${title}</a>`;
+            chatContainer.appendChild(el);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+          });
+        }
+      }
+      return previewHtml;
+    }
+
+    // ======================
+    // SOCKET & MESSAGING
+    // ======================
+    function connect() {
+      socket = new WebSocket(WS_URL);
+
+      socket.onopen = () => {
+        console.log("Connected to GOD TIER CHAT");
+      };
+
+      socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        let className = "message";
+        let prefix = "";
+
+        if (data.type === "banner") {
+          currentUser = data.user;
+          className = "system";
+          prefix = ">> ";
+        } else if (data.type === "system") {
+          className = "system";
+          prefix = "** ";
+        } else if (data.type === "error") {
+          className = "error";
+          prefix = "!! ";
+        } else if (data.type === "admin") {
+          className = "admin";
+          prefix = "## ";
+        } else if (data.type === "private") {
+          className = "private";
+          const sender = data.from || "System";
+          prefix = `[DM from ${sender}] `;
+          if (data.from) {
+            dmSenders.add(data.from);
+            if (!tabs.has(`@${data.from}`)) {
+              addTab(`@${data.from}`);
+            }
+          }
+        } else if (data.type === "message") {
+          prefix = `${data.user}: `;
+        }
+
+        const cleanText = data.text.replace(/</g, "<").replace(/>/g, ">");
+        const previewHtml = renderPreview(cleanText);
+        const html = `<div class="${className}"><span class="sender">${prefix}</span>${cleanText}${previewHtml ? '<br>' + previewHtml : ''}</div>`;
+
+        if (data.type === "private" && data.from) {
+          logMessage(html, `@${data.from}`);
+        } else {
+          logMessage(html, "public");
+        }
+      };
+
+      socket.onerror = (err) => {
+        logMessage(`<div class="error">!! Connection error</div>`, "public");
+      };
+
+      socket.onclose = () => {
+        logMessage(`<div class="error">!! Disconnected. Reload page to reconnect.</div>`, "public");
+      };
+    }
+
+    function sendMessage() {
+      const text = messageInput.value.trim();
+      if (!text) return;
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(text);
+        // Echo command only if it's not a DM (to avoid double echo)
+        if (!text.startsWith("?dm ")) {
+          // We don't echo commands publicly — but for UX, show in console
+          if (text.startsWith("?")) {
+            logMessage(`<div class="system">>> ${text}</div>`, "public");
+          }
+        }
+        messageInput.value = "";
+      }
+    }
+
+    // ======================
+    // SETTINGS
+    // ======================
+    settingsBtn.onclick = () => {
+      newUsernameInput.value = "";
+      newAvatarInput.value = "";
+      settingsModal.style.display = "flex";
+    };
+
+    closeSettings.onclick = () => {
+      settingsModal.style.display = "none";
+    };
+
+    applySettings.onclick = () => {
+      const newName = newUsernameInput.value.trim();
+      const newAvatar = newAvatarInput.value.trim();
+
+      if (newName) {
+        socket.send(`?setname ${newName}`);
+      }
+      if (newAvatar) {
+        socket.send(`?setavatar ${newAvatar}`);
+      }
+      settingsModal.style.display = "none";
+    };
+
+    // ======================
+    // INIT
+    // ======================
+    sendBtn.onclick = sendMessage;
+    messageInput.onkeypress = (e) => {
+      if (e.key === "Enter") sendMessage();
+    };
+
+    // Tab click delegation
+    tabsContainer.onclick = (e) => {
+      if (e.target.classList.contains("tab")) {
+        switchTab(e.target.dataset.target);
+      }
+    };
+
+    connect();
+  </script>
+</body>
+</html>

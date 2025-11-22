@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GOD TIER CHAT — Terminal</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    :root {
+      --bg: #000;
+      --fg: #fff;
+      --dim: #aaa;
+      --error: #ff5555;
+      --success: #55ff55;
+    }
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: 'IBM Plex Mono', 'Courier New', monospace;
+      font-size: 15px;
+      line-height: 1.5;
+      height: 100vh;
+      overflow: hidden;
+    }
+    #terminal {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      padding: 12px;
+    }
+    #connection-bar {
+      padding: 6px 0;
+      text-align: center;
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+    .status-text {
+      color: var(--dim);
+    }
+    .connected .status-text { color: var(--success); }
+    .disconnected .status-text { color: var(--error); }
+
+    #joke-box {
+      text-align: center;
+      font-style: italic;
+      color: var(--dim);
+      margin: 10px 0;
+      min-height: 24px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    #joke-box.show { opacity: 1; }
+
+    .pulse {
+      animation: pulse 1.2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    #header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    #title {
+      font-weight: bold;
+    }
+    #settings-btn {
+      background: transparent;
+      border: 1px solid var(--dim);
+      color: var(--fg);
+      padding: 4px 8px;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    #settings-btn:hover {
+      background: var(--fg);
+      color: var(--bg);
+    }
+
+    #tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    .tab {
+      padding: 5px 10px;
+      cursor: pointer;
+      border: 1px solid var(--dim);
+      background: transparent;
+      transition: all 0.2s;
+    }
+    .tab:hover { background: #222; }
+    .tab.active {
+      background: var(--fg);
+      color: var(--bg);
+      border-color: var(--fg);
+    }
+    .tab.blink {
+      animation: blink 1s 3;
+    }
+    @keyframes blink {
+      0%, 100% { background: transparent; color: var(--fg); }
+      50% { background: var(--fg); color: var(--bg); }
+    }
+
+    #chat-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      background: var(--bg);
+    }
+    .message {
+      opacity: 0;
+      animation: fadeIn 0.3s forwards;
+      margin-bottom: 6px;
+    }
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+    .sender { font-weight: bold; }
+    .system { color: var(--dim); }
+    .error { color: var(--error); }
+    .private { color: #88ffff; }
+    .admin { color: #ffff88; font-weight: bold; }
+
+    .preview {
+      margin-top: 6px;
+      padding: 8px;
+      border: 1px dashed #666;
+    }
+    .preview img, .preview video {
+      max-width: 100%;
+      max-height: 300px;
+      display: block;
+    }
+    .preview a {
+      color: #88ccff;
+      text-decoration: underline;
+    }
+
+    #input-area {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    #message-input {
+      flex: 1;
+      background: var(--bg);
+      color: var(--fg);
+      border: 1px solid var(--dim);
+      padding: 8px;
+      font-family: inherit;
+      font-size: 15px;
+    }
+    #send-btn {
+      background: var(--dim);
+      color: var(--bg);
+      border: none;
+      padding: 0 16px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.2s;
+    }
+    #send-btn:hover { background: var(--fg); }
+
+    #settings-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.9);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: #111;
+      border: 1px solid var(--dim);
+      padding: 20px;
+      width: 90%;
+      max-width: 500px;
+      color: var(--fg);
+    }
+    .modal-content h3 {
+      margin-bottom: 15px;
+      font-weight: bold;
+    }
+    .form-group {
+      margin-bottom: 12px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--dim);
+    }
+    .form-group input {
+      width: 100%;
+      background: var(--bg);
+      color: var(--fg);
+      border: 1px solid var(--dim);
+      padding: 6px;
+      font-family: inherit;
+    }
+    .modal-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 15px;
+    }
+    .modal-buttons button {
+      padding: 6px 12px;
+      background: var(--dim);
+      color: var(--bg);
+      border: none;
+      cursor: pointer;
+    }
+    .modal-buttons button:hover {
+      background: var(--fg);
+    }
+
+    /* Toast Notification */
+    #toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(0,0,0,0.85);
+      color: #88ffff;
+      border: 1px solid #88ffff;
+      padding: 10px 16px;
+      font-family: inherit;
+      z-index: 200;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.3s;
+    }
+    #toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <div id="terminal">
+    <div id="connection-bar">
+      <div id="status" class="disconnected pulse">
+        <span class="status-text"> Connecting to GOD TIER CHAT…</span>
+      </div>
+      <div id="joke-box">...</div>
+    </div>
+
+    <div id="header">
+      <span id="title">GOD TIER CHAT v14.6</span>
+      <button id="settings-btn">⚙️ Settings</button>
+    </div>
+
+    <div id="tabs">
+      <div class="tab active" data-target="public">🌐 Public</div>
+    </div>
+
+    <div id="chat-container"></div>
+
+    <div id="input-area">
+      <input type="text" id="message-input" placeholder="Type message or ?help" autocomplete="off" />
+      <button id="send-btn">SEND</button>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <div id="settings-modal">
+    <div class="modal-content">
+      <h3>⚙️ Settings</h3>
+      <div class="form-group">
+        <label>Username (guest only)</label>
+        <input type="text" id="new-username" placeholder="New username" maxlength="20" />
+      </div>
+      <div class="form-group">
+        <label>Avatar URL</label>
+        <input type="text" id="new-avatar" placeholder="https://example.com/avatar.png" maxlength="200" />
+      </div>
+      <div class="modal-buttons">
+        <button id="close-settings">Cancel</button>
+        <button id="apply-settings">Apply</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ======================
+    // CONFIG & STATE
+    // ======================
+    const WS_URL = "ws://217.160.125.127:13345";
+    let socket = null;
+    let connected = false;
+    let reconnectTimeout = null;
+    let currentTab = "public";
+    const tabs = new Set(["public"]);
+    const dmSenders = new Set();
+    let toastTimeout = null;
+
+    // DOM
+    const statusEl = document.getElementById("status");
+    const jokeBox = document.getElementById("joke-box");
+    const chatContainer = document.getElementById("chat-container");
+    const messageInput = document.getElementById("message-input");
+    const sendBtn = document.getElementById("send-btn");
+    const tabsContainer = document.getElementById("tabs");
+    const toastEl = document.getElementById("toast");
+    const settingsModal = document.getElementById("settings-modal");
+    const settingsBtn = document.getElementById("settings-btn");
+    const closeSettings = document.getElementById("close-settings");
+    const applySettings = document.getElementById("apply-settings");
+    const newUsernameInput = document.getElementById("new-username");
+    const newAvatarInput = document.getElementById("new-avatar");
+
+    // ======================
+    // JOKES (20s rotation while disconnected)
+    // ======================
+    const jokes = [
+      "Why don't terminals get lonely? They always have a shell to talk to.",
+      "I told my computer a joke about sockets. It didn’t respond… still connecting.",
+      "How many sysadmins does it take to change a lightbulb? None—they just wait for it to reconnect.",
+      "My chat server is like my Wi-Fi: always buffering, never gone.",
+      "I asked the server for a joke. It said: 'Reconnecting… please wait.'",
+      "Why was the WebSocket sad? It kept getting closed unexpectedly.",
+      "Patience is a virtue… especially when your terminal is loading.",
+      "This isn’t lag—you’re just experiencing premium anticipation.",
+      "The server is doing its best. So are you. Let’s meet in the middle.",
+      "Did you know? 99% of connection issues resolve themselves… eventually."
+    ];
+
+    function updateJoke() {
+      if (!connected) {
+        const randomJoke = jokes[Math.floor(Math.random() * jokes.length)];
+        jokeBox.textContent = `"${randomJoke}"`;
+        jokeBox.classList.add("show");
+      }
+    }
+
+    function startJokeCycle() {
+      updateJoke();
+      setInterval(updateJoke, 20000);
+    }
+
+    // ======================
+    // UTILS
+    // ======================
+    function showNotification(text) {
+      toastEl.textContent = text;
+      toastEl.classList.add("show");
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toastEl.classList.remove("show");
+      }, 5000);
+    }
+
+    function logMessage(html, tab = "public") {
+      if (!tabs.has(tab)) addTab(tab);
+      if (tab === currentTab) {
+        chatContainer.innerHTML += html;
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }
+    }
+
+    function addTab(name) {
+      tabs.add(name);
+      const tab = document.createElement("div");
+      tab.className = "tab";
+      tab.dataset.target = name;
+      tab.textContent = name.startsWith("@") ? `💬 ${name}` : name;
+      tab.onclick = () => switchTab(name);
+      tabsContainer.appendChild(tab);
+    }
+
+    function switchTab(name) {
+      currentTab = name;
+      document.querySelectorAll(".tab").forEach(t => {
+        t.classList.toggle("active", t.dataset.target === name);
+        if (t.dataset.target === name) t.classList.remove("blink");
+      });
+      chatContainer.innerHTML = "";
+    }
+
+    function isMediaUrl(url) {
+      return /\.(jpg|jpeg|png|gif|webp|mp4|webm|ogg)$/i.test(url);
+    }
+
+    function isImageUrl(url) {
+      return /\.(jpg|jpeg|png|gif|webp)$/i.test(url);
+    }
+
+    function isVideoUrl(url) {
+      return /\.(mp4|webm|ogg)$/i.test(url);
+    }
+
+    async function fetchLinkPreview(url) {
+      try {
+        const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+        const res = await fetch(proxy);
+        const data = await res.json();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(data.contents, "text/html");
+        const title = doc.querySelector("title")?.innerText || url;
+        return { title };
+      } catch (e) {
+        return { title: url };
+      }
+    }
+
+    function renderPreview(text) {
+      const urlRegex = /https?:\/\/[^\s<>"{}|\\^`\[\]]+/gi;
+      const urls = text.match(urlRegex);
+      if (!urls) return "";
+
+      let previewHtml = "";
+      for (const url of urls) {
+        if (isMediaUrl(url)) {
+          if (isImageUrl(url)) {
+            previewHtml += `<div class="preview"><img src="${url}" alt="Image" loading="lazy"></div>`;
+          } else if (isVideoUrl(url)) {
+            previewHtml += `<div class="preview"><video controls src="${url}" preload="metadata"></video></div>`;
+          }
+        } else {
+          fetchLinkPreview(url).then(({ title }) => {
+            const el = document.createElement("div");
+            el.className = "preview";
+            el.innerHTML = `<a href="${url}" target="_blank">${title}</a>`;
+            chatContainer.appendChild(el);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+          });
+        }
+      }
+      return previewHtml;
+    }
+
+    // ======================
+    // SOCKET & RECONNECT
+    // ======================
+    function connect() {
+      if (socket && socket.readyState !== WebSocket.CLOSED) return;
+
+      socket = new WebSocket(WS_URL);
+
+      socket.onopen = () => {
+        connected = true;
+        statusEl.className = "connected";
+        statusEl.innerHTML = '<span class="status-text">✓ Connected to GOD TIER CHAT</span>';
+        jokeBox.classList.remove("show");
+        console.log("Connected");
+      };
+
+      socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        let className = "message";
+        let prefix = "";
+
+        if (data.type === "banner") {
+          prefix = ">> ";
+          className = "system";
+        } else if (data.type === "system") {
+          prefix = "** ";
+          className = "system";
+        } else if (data.type === "error") {
+          prefix = "!! ";
+          className = "error";
+        } else if (data.type === "admin") {
+          prefix = "## ";
+          className = "admin";
+        } else if (data.type === "private") {
+          const sender = data.from || "System";
+          prefix = `[DM from ${sender}] `;
+          className = "private";
+
+          if (data.from) {
+            const dmTab = `@${data.from}`;
+            if (!tabs.has(dmTab)) {
+              addTab(dmTab);
+            }
+            const tabEl = document.querySelector(`.tab[data-target="${dmTab}"]`);
+            if (tabEl && currentTab !== dmTab) {
+              tabEl.classList.add("blink");
+              showNotification(`New DM from ${data.from}`);
+            }
+          }
+        } else if (data.type === "message") {
+          prefix = `${data.user}: `;
+        }
+
+        const cleanText = data.text.replace(/</g, "<").replace(/>/g, ">");
+        const previewHtml = renderPreview(cleanText);
+        const html = `<div class="${className}"><span class="sender">${prefix}</span>${cleanText}${previewHtml ? '<br>' + previewHtml : ''}</div>`;
+        
+        if (data.type === "private" && data.from) {
+          logMessage(html, `@${data.from}`);
+        } else {
+          logMessage(html, "public");
+        }
+      };
+
+      socket.onclose = () => {
+        connected = false;
+        statusEl.className = "disconnected pulse";
+        statusEl.innerHTML = '<span class="status-text"> Reconnecting…</span>';
+        jokeBox.classList.add("show");
+        console.log("Disconnected – retrying...");
+        reconnectTimeout = setTimeout(connect, 3000);
+      };
+
+      socket.onerror = (err) => {
+        console.error("Socket error:", err);
+      };
+    }
+
+    // ======================
+    // UI HANDLERS
+    // ======================
+    function sendMessage() {
+      const text = messageInput.value.trim();
+      if (!text || !connected) return;
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.send(text);
+        if (text.startsWith("?") && !text.startsWith("?dm ")) {
+          logMessage(`<div class="system">>> ${text}</div>`, "public");
+        }
+        messageInput.value = "";
+      }
+    }
+
+    settingsBtn.onclick = () => {
+      newUsernameInput.value = "";
+      newAvatarInput.value = "";
+      settingsModal.style.display = "flex";
+    };
+
+    closeSettings.onclick = () => {
+      settingsModal.style.display = "none";
+    };
+
+    applySettings.onclick = () => {
+      const newName = newUsernameInput.value.trim();
+      const newAvatar = newAvatarInput.value.trim();
+      if (newName) socket.send(`?setname ${newName}`);
+      if (newAvatar) socket.send(`?setavatar ${newAvatar}`);
+      settingsModal.style.display = "none";
+    };
+
+    sendBtn.onclick = sendMessage;
+    messageInput.onkeypress = (e) => {
+      if (e.key === "Enter") sendMessage();
+    };
+
+    tabsContainer.onclick = (e) => {
+      if (e.target.classList.contains("tab")) {
+        switchTab(e.target.dataset.target);
+      }
+    };
+
+    // ======================
+    // INIT
+    // ======================
+    startJokeCycle();
+    connect();
+  </script>
+</body>
+</html>

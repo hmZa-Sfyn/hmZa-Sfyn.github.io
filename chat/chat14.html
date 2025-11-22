@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Shat Chat</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    :root {
+      --bg-dark: #36393f;
+      --bg-darker: #2f3136;
+      --bg-light: #40444b;
+      --text: #dcddde;
+      --text-secondary: #b9bbbe;
+      --accent: #5865f2;
+      --online: #43b581;
+      --error: #ed4245;
+    }
+    body {
+      background: var(--bg-darker);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+    }
+    #sidebar {
+      width: 240px;
+      background: var(--bg-dark);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    #header {
+      padding: 16px;
+      font-weight: bold;
+      font-size: 18px;
+      border-bottom: 1px solid var(--bg-light);
+    }
+    #user-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+    }
+    .user-item {
+      padding: 8px 12px;
+      border-radius: 4px;
+      margin-bottom: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .user-item:hover { background: var(--bg-light); }
+    .user-status {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--online);
+    }
+    #main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    #chat-header {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--bg-light);
+      font-weight: 600;
+    }
+    #messages {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    .message {
+      margin-bottom: 16px;
+      line-height: 1.4;
+      animation: fadeIn 0.2s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+    .sender {
+      font-weight: 600;
+      color: var(--accent);
+      margin-right: 8px;
+    }
+    .system { color: var(--text-secondary); font-style: italic; }
+    .error { color: var(--error); }
+    .private { color: #eb459e; }
+    .preview {
+      margin-top: 8px;
+      border-radius: 6px;
+      overflow: hidden;
+      max-width: 500px;
+    }
+    .preview img, .preview video {
+      width: 100%;
+      max-height: 300px;
+      object-fit: contain;
+      background: #000;
+    }
+    .preview a {
+      display: block;
+      padding: 10px;
+      background: var(--bg-light);
+      border-radius: 6px;
+      text-decoration: none;
+      color: var(--text);
+      margin-top: 6px;
+    }
+    .preview a:hover { background: var(--bg-dark); }
+    .preview-title { font-weight: 600; display: block; margin-bottom: 4px; }
+    .preview-favicon { width: 16px; height: 16px; vertical-align: middle; margin-right: 6px; }
+
+    #input-area {
+      padding: 16px;
+      border-top: 1px solid var(--bg-light);
+      display: flex;
+      gap: 10px;
+    }
+    #message-input {
+      flex: 1;
+      padding: 10px 14px;
+      border-radius: 6px;
+      border: none;
+      background: var(--bg-light);
+      color: var(--text);
+      outline: none;
+    }
+    #send-btn {
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 0 20px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    #send-btn:hover { background: #4752c4; }
+    #status-bar {
+      padding: 6px 16px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      text-align: center;
+      border-top: 1px solid var(--bg-light);
+    }
+    .connecting { color: #faa61a; }
+    .connected { color: var(--online); }
+  </style>
+</head>
+<body>
+  <div id="sidebar">
+    <div id="header">Shat Chat</div>
+    <div id="user-list">
+      <!-- Users will appear here -->
+    </div>
+    <div id="status-bar" class="connecting">Connecting...</div>
+  </div>
+
+  <div id="main">
+    <div id="chat-header">Public Chat</div>
+    <div id="messages"></div>
+    <div id="input-area">
+      <input type="text" id="message-input" placeholder="Message #public or ?help" autocomplete="off" />
+      <button id="send-btn">Send</button>
+    </div>
+  </div>
+
+  <script>
+    const WS_URL = "ws://217.160.125.127:13345";
+    let socket = null;
+    let connected = false;
+    let currentUser = "Guest";
+    let currentTab = "public";
+    const users = {};
+    const dmTabs = new Set();
+
+    const statusBar = document.getElementById("status-bar");
+    const messageInput = document.getElementById("message-input");
+    const sendBtn = document.getElementById("send-btn");
+    const messagesEl = document.getElementById("messages");
+    const chatHeader = document.getElementById("chat-header");
+    const userList = document.getElementById("user-list");
+
+    // Auto-reconnect
+    function connect() {
+      socket = new WebSocket(WS_URL);
+      socket.onopen = () => {
+        connected = true;
+        statusBar.textContent = "Online";
+        statusBar.className = "connected";
+      };
+      socket.onmessage = handleSocketMessage;
+      socket.onclose = () => {
+        connected = false;
+        statusBar.textContent = "Reconnecting...";
+        statusBar.className = "connecting";
+        setTimeout(connect, 3000);
+      };
+      socket.onerror = () => {};
+    }
+
+    function handleSocketMessage(event) {
+      const data = JSON.parse(event.data);
+      if (data.type === "welcome") {
+        currentUser = data.user.username;
+        addUserToList(currentUser, "online", data.user.role === "registered");
+      } else if (data.type === "system" && data.event === "user_joined") {
+        addUserToList(data.username, "online");
+      } else if (data.type === "system" && data.event === "user_left") {
+        removeUserFromList(data.username);
+      } else if (data.type === "users") {
+        // Could refresh user list, but we manage dynamically
+      }
+
+      // Render message
+      renderMessage(data);
+    }
+
+    function addUserToList(name, status = "online", isRegistered = false) {
+      if (users[name]) return;
+      users[name] = { status, isRegistered };
+      const div = document.createElement("div");
+      div.className = "user-item";
+      div.innerHTML = `
+        <div class="user-status"></div>
+        <span>${name}${isRegistered ? ' ✅' : ''}</span>
+      `;
+      div.onclick = () => {
+        if (name !== currentUser) openDmTab(name);
+      };
+      userList.appendChild(div);
+    }
+
+    function removeUserFromList(name) {
+      delete users[name];
+      const el = [...userList.children].find(e => e.querySelector('span')?.textContent.startsWith(name));
+      if (el) el.remove();
+    }
+
+    function openDmTab(target) {
+      const tabId = `dm-${target}`;
+      currentTab = tabId;
+      chatHeader.textContent = `DM with ${target}`;
+      messagesEl.innerHTML = `<div class="system">Private messages with ${target} will appear here.</div>`;
+      // Future: load chat history
+    }
+
+    function isImageUrl(url) {
+      return /\.(jpg|jpeg|png|gif|webp)$/i.test(url);
+    }
+    function isVideoUrl(url) {
+      return /\.(mp4|webm|ogg)$/i.test(url);
+    }
+    async function fetchLinkPreview(url) {
+      try {
+        const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+        const res = await fetch(proxy);
+        const data = await res.json();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(data.contents, "text/html");
+        const title = doc.querySelector("title")?.innerText || url;
+        const icon = doc.querySelector("link[rel*='icon']")?.href || "/favicon.ico";
+        const absIcon = new URL(icon, url).href;
+        return { title, icon: absIcon };
+      } catch {
+        return { title: url, icon: "" };
+      }
+    }
+
+    function renderPreview(text) {
+      const urlRegex = /https?:\/\/[^\s<>"{}|\\^`\[\]]+/gi;
+      const urls = text.match(urlRegex);
+      if (!urls) return "";
+
+      let html = "";
+      for (const url of urls) {
+        if (isImageUrl(url)) {
+          html += `<div class="preview"><img src="${url}" loading="lazy"></div>`;
+        } else if (isVideoUrl(url)) {
+          html += `<div class="preview"><video controls preload="metadata"><source src="${url}" type="video/mp4">Your browser does not support the video tag.</video></div>`;
+        } else {
+          fetchLinkPreview(url).then(({ title, icon }) => {
+            const msgEl = document.querySelector(`.message[data-text="${text}"]`);
+            if (msgEl) {
+              const preview = document.createElement("div");
+              preview.className = "preview";
+              preview.innerHTML = `
+                <a href="${url}" target="_blank">
+                  ${icon ? `<img class="preview-favicon" src="${icon}" onerror="this.style.display='none'">` : ''}
+                  <span class="preview-title">${title}</span>
+                </a>
+              `;
+              msgEl.appendChild(preview);
+            }
+          });
+        }
+      }
+      return html;
+    }
+
+    function renderMessage(data) {
+      let className = "message";
+      let prefix = "";
+      let text = data.text || "";
+
+      if (data.type === "welcome") return;
+      if (data.type === "help") {
+        className = "system";
+        prefix = "📘 ";
+        text = data.text;
+      } else if (data.type === "system") {
+        className = "system";
+        prefix = "⚙️ ";
+        text = data.text || data.event;
+      } else if (data.type === "error") {
+        className = "error";
+        prefix = "❌ ";
+        text = data.message;
+      } else if (data.type === "success") {
+        className = "system";
+        prefix = "✅ ";
+        text = data.message;
+      } else if (data.type === "private_message") {
+        className = "private";
+        prefix = `${data.from}: `;
+        // Auto-open DM tab if not current
+        if (currentTab !== `dm-${data.from}`) {
+          // Optional: show notification
+        }
+      } else if (data.type === "private_message_sent") {
+        className = "message";
+        prefix = `→ ${data.to}: `;
+      } else if (data.type === "message") {
+        prefix = `${data.sender}: `;
+      } else if (data.type === "whoami" || data.type === "users" || data.type === "whois") {
+        className = "system";
+        prefix = "🔍 ";
+        text = JSON.stringify(data, null, 2);
+      }
+
+      const cleanText = text.replace(/</g, "<").replace(/>/g, ">");
+      const msgId = Math.random().toString(36).substr(2, 9);
+      const messageHtml = `
+        <div class="${className}" data-text="${cleanText}">
+          <span class="sender">${prefix}</span>${cleanText}
+        </div>
+      `;
+      messagesEl.insertAdjacentHTML("beforeend", messageHtml);
+      const msgEl = messagesEl.lastElementChild;
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+
+      // Attach preview if needed
+      if (data.type !== "whoami" && data.type !== "users" && data.type !== "whois") {
+        renderPreview(cleanText);
+      }
+    }
+
+    function sendMessage() {
+      const text = messageInput.value.trim();
+      if (!text || !connected) return;
+      socket.send(text);
+      messageInput.value = "";
+    }
+
+    sendBtn.addEventListener("click", sendMessage);
+    messageInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") sendMessage();
+    });
+
+    // Start!
+    connect();
+  </script>
+</body>
+</html>
