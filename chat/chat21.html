@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GOD TIER CHAT</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    :root {
+      --primary: #25D366;
+      --primary-dark: #128C7E;
+      --secondary: #DCF8C6;
+      --chat-bg: #E5DDD5;
+      --sidebar-bg: #ededed;
+      --header-bg: #075E54;
+      --header-text: #ffffff;
+      --message-bg: #ffffff;
+      --received-bg: #DCF8C6;
+      --sent-bg: #DCF8C6;
+      --input-bg: #f0f0f0;
+      --border: #d1d1d1;
+      --text: #333;
+      --text-light: #667788;
+      --status-online: #34B7F1;
+      --status-offline: #cccccc;
+      --debug-bg: #2d2d2d;
+      --debug-text: #4ec9b0;
+    }
+    
+    body {
+      height: 100vh;
+      display: flex;
+      background-color: var(--chat-bg);
+    }
+    
+    /* Sidebar */
+    #sidebar {
+      width: 320px;
+      background-color: var(--sidebar-bg);
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border);
+    }
+    
+    #sidebar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 16px;
+      background-color: var(--header-bg);
+      color: var(--header-text);
+    }
+    
+    #sidebar-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+    
+    .sidebar-icons {
+      display: flex;
+      gap: 20px;
+    }
+    
+    .sidebar-icon {
+      font-size: 18px;
+      cursor: pointer;
+    }
+    
+    #search-container {
+      padding: 8px 10px;
+      background-color: var(--sidebar-bg);
+    }
+    
+    #search-input {
+      width: 100%;
+      padding: 8px 12px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background-color: var(--input-bg);
+      font-size: 14px;
+    }
+    
+    #contacts {
+      flex: 1;
+      overflow-y: auto;
+    }
+    
+    .contact-item {
+      display: flex;
+      padding: 12px 16px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    .contact-item:hover {
+      background-color: #f5f5f5;
+    }
+    
+    .contact-item.active {
+      background-color: #e9e9e9;
+    }
+    
+    .contact-avatar {
+      width: 49px;
+      height: 49px;
+      border-radius: 50%;
+      background-color: #ccc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 18px;
+      margin-right: 15px;
+    }
+    
+    .contact-info {
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .contact-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+    
+    .contact-name {
+      font-weight: 500;
+      font-size: 15px;
+      color: var(--text);
+    }
+    
+    .contact-time {
+      font-size: 12px;
+      color: var(--text-light);
+    }
+    
+    .contact-message {
+      font-size: 14px;
+      color: var(--text-light);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    /* Chat Area */
+    #chat-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    #chat-header {
+      display: flex;
+      align-items: center;
+      padding: 10px 16px;
+      background-color: var(--header-bg);
+      color: var(--header-text);
+    }
+    
+    #chat-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: #ccc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 16px;
+      margin-right: 15px;
+    }
+    
+    #chat-info {
+      flex: 1;
+    }
+    
+    #chat-name {
+      font-weight: 500;
+      font-size: 16px;
+    }
+    
+    #chat-status {
+      font-size: 13px;
+      opacity: 0.8;
+    }
+    
+    #chat-icons {
+      display: flex;
+      gap: 20px;
+    }
+    
+    #messages {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .message {
+      max-width: 100%;
+      margin-bottom: 10px;
+      padding: 10px;
+      border-radius: 8px;
+      background-color: var(--debug-bg);
+      font-family: monospace;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+    
+    .message-key {
+      color: var(--debug-text);
+      font-weight: bold;
+    }
+    
+    .message-value {
+      color: #ce9178;
+    }
+    
+    .message-separator {
+      color: #888;
+      margin: 2px 0;
+    }
+    
+    #input-area {
+      display: flex;
+      padding: 10px;
+      background-color: var(--sidebar-bg);
+      border-top: 1px solid var(--border);
+    }
+    
+    #message-input {
+      flex: 1;
+      padding: 10px 15px;
+      border-radius: 22px;
+      border: 1px solid var(--border);
+      background-color: var(--input-bg);
+      font-size: 15px;
+      outline: none;
+    }
+    
+    #send-btn {
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      margin-left: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    #send-btn:hover {
+      background-color: var(--primary-dark);
+    }
+    
+    #send-btn i {
+      font-size: 18px;
+    }
+    
+    /* Connection Status */
+    #connection-bar {
+      padding: 6px 16px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-light);
+      background-color: #f0f0f0;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    #connection-bar.connected {
+      color: var(--primary);
+    }
+    
+    #connection-bar.disconnected {
+      color: #e74c3c;
+    }
+    
+    /* Joke Box */
+    #joke-box {
+      text-align: center;
+      font-style: italic;
+      color: var(--text-light);
+      padding: 10px;
+      background-color: #f8f8f8;
+      border-bottom: 1px solid var(--border);
+      display: none;
+    }
+    
+    #joke-box.show {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div id="sidebar">
+    <div id="connection-bar" class="disconnected">Connecting...</div>
+    <div id="joke-box">...</div>
+    <div id="sidebar-header">
+      <div id="sidebar-title">GOD TIER CHAT</div>
+      <div class="sidebar-icons">
+        <i class="fas fa-search"></i>
+        <i class="fas fa-ellipsis-vertical"></i>
+      </div>
+    </div>
+    <div id="search-container">
+      <input type="text" id="search-input" placeholder="Search or start new chat">
+    </div>
+    <div id="contacts">
+      <div class="contact-item active" data-target="public">
+        <div class="contact-avatar" style="background-color: #25D366;">G</div>
+        <div class="contact-info">
+          <div class="contact-header">
+            <div class="contact-name">Public Chat</div>
+            <div class="contact-time"></div>
+          </div>
+          <div class="contact-message">Connected</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="chat-area">
+    <div id="chat-header">
+      <div id="chat-avatar" style="background-color: #25D366;">G</div>
+      <div id="chat-info">
+        <div id="chat-name">Public Chat</div>
+        <div id="chat-status">online</div>
+      </div>
+      <div id="chat-icons">
+        <i class="fas fa-search"></i>
+        <i class="fas fa-paperclip"></i>
+        <i class="fas fa-ellipsis-vertical"></i>
+      </div>
+    </div>
+    <div id="messages">
+      <div class="message">
+        <div>Waiting for messages...</div>
+      </div>
+    </div>
+    <div id="input-area">
+      <input type="text" id="message-input" placeholder="Type a message or command" autocomplete="off">
+      <button id="send-btn">
+        <i class="fas fa-paper-plane"></i>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // Configuration
+    const WS_URL = "ws://217.160.125.127:13345/";
+    const JOKES = [
+      "Why don't terminals get lonely? They always have a shell to talk to.",
+      "I told my computer a joke about sockets. It didn't respond... still connecting.",
+      "How many sysadmins does it take to change a lightbulb? None—they just wait for it to reconnect.",
+      "My chat server is like my Wi-Fi: always buffering, never gone.",
+      "I asked the server for a joke. It said: 'Reconnecting... please wait.'",
+      "Why was the WebSocket sad? It kept getting closed unexpectedly.",
+      "Patience is a virtue... especially when your terminal is loading.",
+      "This isn't lag—you're just experiencing premium anticipation.",
+      "The server is doing its best. So are you. Let's meet in the middle.",
+      "Did you know? 99% of connection issues resolve themselves... eventually."
+    ];
+    
+    // DOM Elements
+    const connectionBar = document.getElementById("connection-bar");
+    const jokeBox = document.getElementById("joke-box");
+    const contactsContainer = document.getElementById("contacts");
+    const chatName = document.getElementById("chat-name");
+    const chatStatus = document.getElementById("chat-status");
+    const chatAvatar = document.getElementById("chat-avatar");
+    const messagesContainer = document.getElementById("messages");
+    const messageInput = document.getElementById("message-input");
+    const sendBtn = document.getElementById("send-btn");
+    
+    // State Management
+    let socket = null;
+    let connected = false;
+    let currentTab = "public";
+    const tabs = new Set(["public"]);
+    let currentUser = "Guest";
+    
+    // Initialize
+    connect();
+    startJokeCycle();
+    
+    // Utilities
+    function getAvatarColor(name) {
+      const colors = [
+        '#25D366', '#128C7E', '#34B7F1', '#075E54', 
+        '#F58220', '#E96F92', '#9146FF', '#46C2FF'
+      ];
+      let hash = 0;
+      for (let i = 0; i < name.length; i++) {
+        hash = name.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      return colors[Math.abs(hash) % colors.length];
+    }
+    
+    function getInitials(name) {
+      return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+    }
+    
+    function formatKeyValue(obj, prefix = "") {
+      let html = "";
+      for (const [key, value] of Object.entries(obj)) {
+        const fullKey = prefix ? `${prefix}.${key}` : key;
+        if (value !== null && typeof value === "object" && !Array.isArray(value)) {
+          // Nested object
+          html += `<div class="message-key">${fullKey}:</div>`;
+          html += `<div class="message-separator">  └─</div>`;
+          html += formatKeyValue(value, fullKey);
+        } else {
+          // Simple value
+          const displayValue = typeof value === "string" ? `"${value}"` : String(value);
+          html += `<div><span class="message-key">${fullKey}</span> ➜ <span class="message-value">${displayValue}</span></div>`;
+        }
+      }
+      return html;
+    }
+    
+    function addContact(username) {
+      if (tabs.has(username)) return;
+      
+      tabs.add(username);
+      const color = getAvatarColor(username);
+      const initials = getInitials(username);
+      
+      const contactItem = document.createElement("div");
+      contactItem.className = "contact-item";
+      contactItem.dataset.target = username;
+      contactItem.innerHTML = `
+        <div class="contact-avatar" style="background-color: ${color};">${initials}</div>
+        <div class="contact-info">
+          <div class="contact-header">
+            <div class="contact-name">${username}</div>
+            <div class="contact-time"></div>
+          </div>
+          <div class="contact-message">New message</div>
+        </div>
+      `;
+      
+      contactItem.addEventListener("click", () => {
+        switchTab(username);
+      });
+      
+      contactsContainer.appendChild(contactItem);
+    }
+    
+    function switchTab(username) {
+      // Update active contact
+      document.querySelectorAll('.contact-item').forEach(item => {
+        item.classList.toggle('active', item.dataset.target === username);
+      });
+      
+      currentTab = username;
+      
+      // Update chat header
+      const initials = getInitials(username);
+      const color = getAvatarColor(username);
+      chatName.textContent = username;
+      chatStatus.textContent = "online";
+      chatAvatar.style.backgroundColor = color;
+      chatAvatar.textContent = initials;
+      
+      // Clear and show all messages for this tab
+      messagesContainer.innerHTML = '';
+      
+      // Show a welcome message
+      messagesContainer.innerHTML = `
+        <div class="message">
+          <div>💬 Viewing chat: <strong>${username}</strong></div>
+          <div>All server responses will appear here with full key-value details</div>
+        </div>
+      `;
+    }
+    
+    function displayRawMessage(data, tab = "public") {
+      // Always add to public tab for debugging
+      if (tab === currentTab) {
+        const messageDiv = document.createElement("div");
+        messageDiv.className = "message";
+        
+        // Format the entire JSON object with key-value pairs
+        const formatted = formatKeyValue(data);
+        messageDiv.innerHTML = `<div style="margin-bottom: 8px; color: #569cd6; border-bottom: 1px solid #444; padding-bottom: 4px;">
+          📡 Server Response (${new Date().toLocaleTimeString()})
+        </div>${formatted}`;
+        
+        messagesContainer.appendChild(messageDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      }
+      
+      // Also create contact for DMs
+      if (data.type === "private_message" && data.from) {
+        const dmTab = `@${data.from}`;
+        if (!tabs.has(dmTab)) {
+          addContact(dmTab);
+        }
+      }
+    }
+    
+    function sendMessage() {
+      const text = messageInput.value.trim();
+      if (!text) return;
+      
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        // Send the message
+        socket.send(text);
+        messageInput.value = "";
+        
+        // Show sent message in debug format
+        if (currentTab === "public") {
+          const messageDiv = document.createElement("div");
+          messageDiv.className = "message";
+          messageDiv.innerHTML = `
+            <div style="margin-bottom: 8px; color: #4ec9b0; border-bottom: 1px solid #444; padding-bottom: 4px;">
+              📤 Sent Message (${new Date().toLocaleTimeString()})
+            </div>
+            <div><span class="message-key">text</span> ➜ <span class="message-value">"${text}"</span></div>
+          `;
+          messagesContainer.appendChild(messageDiv);
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+      }
+    }
+    
+    // WebSocket connection
+    function connect() {
+      socket = new WebSocket(WS_URL);
+      
+      socket.onopen = () => {
+        connected = true;
+        connectionBar.textContent = "Connected";
+        connectionBar.className = "connected";
+        jokeBox.classList.remove("show");
+      };
+      
+      socket.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          displayRawMessage(data);
+        } catch (e) {
+          console.error("Invalid JSON:", event.data);
+          const messageDiv = document.createElement("div");
+          messageDiv.className = "message";
+          messageDiv.innerHTML = `
+            <div style="color: #f48771;">❌ Invalid JSON</div>
+            <div><span class="message-key">raw</span> ➜ <span class="message-value">${event.data}</span></div>
+          `;
+          messagesContainer.appendChild(messageDiv);
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+      };
+      
+      socket.onerror = (err) => {
+        console.error("Connection error:", err);
+      };
+      
+      socket.onclose = () => {
+        connected = false;
+        connectionBar.textContent = "Reconnecting...";
+        connectionBar.className = "disconnected";
+        jokeBox.classList.add("show");
+        setTimeout(connect, 3000);
+      };
+    }
+    
+    function updateJoke() {
+      if (!connected) {
+        const randomJoke = JOKES[Math.floor(Math.random() * JOKES.length)];
+        jokeBox.textContent = `"${randomJoke}"`;
+        jokeBox.classList.add("show");
+      }
+    }
+    
+    function startJokeCycle() {
+      updateJoke();
+      setInterval(updateJoke, 20000);
+    }
+    
+    // Event listeners
+    sendBtn.addEventListener("click", sendMessage);
+    messageInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") sendMessage();
+    });
+    
+    // Handle contact clicks
+    contactsContainer.addEventListener("click", (e) => {
+      if (e.target.closest('.contact-item')) {
+        const contact = e.target.closest('.contact-item');
+        const target = contact.dataset.target;
+        switchTab(target);
+      }
+    });
+  </script>
+</body>
+</html>
