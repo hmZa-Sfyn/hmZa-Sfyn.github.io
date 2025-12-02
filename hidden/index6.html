@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LiveHub Pro • 1080p Free Live Cams 2025</title>
+  <meta name="description" content="The only free cam site with real 1080p HD — Japanese, Asian, Teen, MILF, Squirt, Anal — instant streaming."/>
+  <link rel="preconnect" href="https://go.mnaspm.com"/>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
+  <style>
+    :root{--p:#ff006e;--s:#9d00ff;--bg:#000;--card:#0f0f0f;--text:#fff}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif;overflow-x:hidden;
+         background:radial-gradient(circle at 10% 90%,#1a0033,#000),radial-gradient(circle at 90% 10%,#33001a,#000)}
+    header{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(8,8,8,0.97);backdrop-filter:blur(30px);padding:18px;display:flex;align-items:center;gap:18px;border-bottom:3px solid #333}
+    .logo{font-weight:900;font-size:36px;background:linear-gradient(90deg,var(--p),var(--s));-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 0 30px rgba(255,0,110,0.6)}
+    .search{flex:1;display:flex;border-radius:50px;overflow:hidden;background:#111;box-shadow:0 15px 50px rgba(255,0,110,0.4);border:2px solid #555}
+    #q{flex:1;padding:20px 30px;background:transparent;border:none;color:white;font-size:19px;outline:none}
+    #go,#randomBtn{background:linear-gradient(45deg,var(--p),var(--s));border:none;padding:0 36px;color:white;font-weight:900;cursor:pointer;transition:.4s;font-size:19px}
+    #randomBtn i{margin-right:12px}
+    .tags{padding:18px;overflow-x:auto;display:flex;gap:16px;margin-top:96px;background:linear-gradient(to bottom,#111,#000)}
+    .tag{padding:14px 28px;background:#222;border-radius:50px;font-size:16px;cursor:pointer;transition:.5s;white-space:nowrap;border:2px solid #444;font-weight:700}
+    .tag.active,.tag:hover{background:var(--p);border-color:var(--p);transform:scale(1.1);box-shadow:0 0 40px rgba(255,0,110,0.7)}
+    main{padding:24px 18px 180px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:20px;max-width:2400px;margin:0 auto}
+    @media(min-width:640px){.grid{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}}
+    .card{position:relative;border-radius:28px;overflow:hidden;background:var(--card);box-shadow:0 25px 60px rgba(0,0,0,0.95);transition:.6s;cursor:pointer;border:3px solid transparent}
+    .card:hover{transform:translateY(-20px) scale(1.04);box-shadow:0 50px 100px rgba(255,0,110,0.6);border-color:var(--p)}
+    .thumb{width:100%;aspect-ratio:16/9;object-fit:cover;filter:blur(20px);transition:.7s}
+    .card:hover .thumb{filter:blur(0)}
+    .live-badge{position:absolute;top:14px;left:14px;background:#ff0033;color:white;padding:10px 20px;border-radius:20px;font-weight:900;display:flex;align-items:center;gap:10px;animation:pulse 2s infinite}
+    .hd-badge{position:absolute;top:14px;right:14px;background:#8b00ff;color:white;padding:8px 16px;border-radius:16px;font-size:13px;font-weight:900}
+    .quality-badge{position:absolute;bottom:14px;right:14px;background:rgba(0,0,0,0.8);color:white;padding:8px 16px;border-radius:16px;font-size:13px;font-weight:900}
+    .viewers{position:absolute;bottom:14px;left:14px;background:rgba(0,0,0,0.8);color:white;padding:10px 20px;border-radius:20px;display:flex;align-items:center;gap:10px;font-weight:800}
+    .fav-btn{position:absolute;top:14px;right:14px;background:rgba(0,0,0,0.7);width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;opacity:0;transition:.5s;z-index:10}
+    .card:hover .fav-btn{opacity:1;transform:scale(1.3)}
+    .info{padding:20px;text-align:center}
+    .name{font-weight:900;font-size:20px;color:white;margin-bottom:10px;text-shadow:0 3px 20px #000}
+    .meta{font-size:15px;color:#ccc;display:flex;align-items:center;justify-content:center;gap:12px;font-weight:700}
+    #player{position:fixed;inset:0;background:#000;z-index:999;display:none;flex-direction:column}
+    #mainVideo{flex:1;background:#000}
+    #playerControls{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);padding:16px 32px;border-radius:50px;display:flex;gap:20px;align-items:center;z-index:1001}
+    .quality-btn{padding:12px 24px;background:#333;color:white;border-radius:50px;font-weight:700;cursor:pointer;transition:.4s;border:2px solid transparent}
+    .quality-btn.active,.quality-btn:hover{background:var(--p);border-color:white}
+    #closePlayer{position:absolute;top:20px;right:20px;font-size:70px;color:white;cursor:pointer;z-index:1000;background:rgba(0,0,0,0.7);width:80px;height:80px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:.4s}
+    #closePlayer:hover{background:var(--p);transform:rotate(90deg)}
+    #sidebar{width:100%;max-width:460px;background:#111;overflow-y:auto;padding:24px;display:none;flex-direction:column;gap:18px;border-left:4px solid var(--p)}
+    .side-card{display:flex;gap:16px;cursor:pointer;padding:16px;border-radius:24px;transition:.5s;background:#1a1a1a}
+    .side-card:hover{background:#333;transform:translateX(16px);box-shadow:0 15px 40px rgba(255,0,110,0.4)}
+    .side-thumb{width:180px;height:101px;object-fit:cover;border-radius:20px}
+    .discord{position:fixed;bottom:32px;right:32px;width:80px;height:80px;background:#5865F2;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:40px;color:white;box-shadow:0 20px 60px rgba(88,101,242,0.8);animation:pulse 2s infinite;z-index:99;cursor:pointer}
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">LiveHub Pro</div>
+  <div class="search">
+    <input type="text" id="q" placeholder="1080p teen • milf • asian • squirt • anal • japanese • bigboobs"/>
+    <button id="go">Search</button>
+    <button id="randomBtn">Random</button>
+  </div>
+</header>
+
+<div class="tags scrollbar-hide" id="tags"></div>
+
+<main>
+  <div id="grid" class="grid">
+    <div class="loading">Loading 1080p cams...</div>
+  </div>
+</main>
+
+<div id="player">
+  <div id="closePlayer">X</div>
+  <video id="mainVideo" controls autoplay playsinline></video>
+  <div id="playerControls">
+    <div class="quality-btn active" data-q="1080p">1080p</div>
+    <div class="quality-btn" data-q="720p">720p</div>
+    <div class="quality-btn" data-q="480p">480p</div>
+    <div class="quality-btn" data-q="240p">240p</div>
+    <div id="currentQuality" style="margin-left:20px;color:#fff;font-weight:900">Auto</div>
+  </div>
+  <div id="sidebar"></div>
+</div>
+
+<div class="discord" onclick="window.open('https://discord.gg/jmCtVwvbqr','_blank')">
+  <i class="fab fa-discord"></i>
+</div>
+
+<script>
+const API = "https://go.mnaspm.com/api/models";
+let currentTag = "girls/japanese";
+let allModels = [];
+let page = 1;
+let loading = false;
+let favorites = JSON.parse(localStorage.getItem("livehub_favs") || "[]");
+let currentHls = null;
+let currentModel = null;
+
+const hotTags = ["girls/japanese","girls/asian","girls/teen","girls/milf","girls/latina","girls/ebony","girls/anal","girls/squirt","girls/bigboobs","girls/feet","girls/cosplay","girls/lesbian","girls/bbw","girls/petite","girls/curvy","girls/young","girls/russian","girls/colombian"];
+
+function initTags(){
+  const c = document.getElementById("tags");
+  hotTags.forEach(t=>{
+    const b=document.createElement("div"); b.className="tag";
+    b.textContent = t.replace("girls/", "").toUpperCase();
+    b.onclick = () => { document.querySelectorAll(".tag").forEach(x=>x.classList.remove("active")); b.classList.add("active"); currentTag = t; page = 1; load(true); };
+    if(t===currentTag) b.classList.add("active");
+    c.appendChild(b);
+  });
+}
+
+async function load(reset = false){
+  if(loading) return;
+  loading = true;
+  const g = document.getElementById("grid");
+  if(reset) { g.innerHTML = `<div class="loading">Loading 1080p cams...</div>`; allModels = []; page = 1; }
+
+  const p = new URLSearchParams({
+    landing: "WidgetV4Universal", tag: currentTag, quality: "1080p", sortBy: "paidUsers",
+    stripcashR: "0", forceClient: "1", modelPromotion: "0", limit: "80", page: page
+  });
+
+  try {
+    const r = await fetch(`${API}?${p}`);
+    const d = await r.json();
+    const models = d.models || [];
+    allModels = reset ? models : [...allModels, ...models];
+    renderGrid(allModels, reset);
+    if(models.length > 0) page++;
+  } catch(e) {
+    g.innerHTML += `<div style="color:#ff3366;text-align:center;padding:100px;font-size:22px">Failed to load cams</div>`;
+  }
+  loading = false;
+}
+
+function renderGrid(models, reset = false){
+  const g = document.getElementById("grid");
+  if(reset) g.innerHTML = "";
+  models.forEach(m => {
+    const c = document.createElement("div"); c.className = "card";
+    const flag = m.modelsCountry ? `https://flagcdn.com/32x24/${m.modelsCountry.toLowerCase()}.png` : "";
+    const thumb = m.snapshotUrl || m.widgetPreviewUrl || "https://via.placeholder.com/400x225/111/fff?text=LIVE";
+    const has1080p = !!m.stream?.urls?.["1080p"] || !!m.stream?.urls?.original;
+
+    c.innerHTML = `
+      <img class="thumb" src="${thumb}" loading="lazy">
+      <div class="live-badge">LIVE</div>
+      ${has1080p ? '<div class="hd-badge">1080p</div>' : '<div class="hd-badge">HD</div>'}
+      <div class="viewers">${(m.viewersCount||0).toLocaleString()} watching</div>
+      <div class="fav-btn ${favorites.includes(m.id)?'active':''}" onclick="toggleFav('${m.id}',event)">♥</div>
+      <div class="info">
+        <div class="name">${m.username || "Hot Girl"}</div>
+        <div class="meta">${flag?`<img src="${flag}">`:''} ${m.modelsCountry?.toUpperCase()||'??'}</div>
+      </div>
+    `;
+    c.onclick = (e) => { if(!e.target.classList.contains('fav-btn')) openPlayer(m); };
+    g.appendChild(c);
+  });
+}
+
+function toggleFav(id, e){
+  e.stopPropagation();
+  favorites = favorites.includes(id) ? favorites.filter(x=>x!==id) : [...favorites, id];
+  localStorage.setItem("livehub_favs", JSON.stringify(favorites));
+  load(true);
+}
+
+function openPlayer(model){
+  currentModel = model;
+  const video = document.getElementById("mainVideo");
+  const player = document.getElementById("player");
+  const sidebar = document.getElementById("sidebar");
+  player.style.display = "flex";
+  sidebar.style.display = "flex";
+  sidebar.innerHTML = "<div style='text-align:center;padding:50px;color:#888'>Loading hot recommendations...</div>";
+
+  if(currentHls){ currentHls.destroy(); currentHls = null; }
+
+  // Auto pick best quality
+  const urls = model.stream?.urls || {};
+  const qualities = ["1080p", "720p", "480p", "240p"];
+  let bestUrl = urls.original || urls["1080p"] || urls["720p"] || urls["480p"] || urls["240p"];
+
+  if(Hls.isSupported()){
+    currentHls = new Hls({ enableWorker: true, maxBufferLength: 30 });
+    currentHls.loadSource(bestUrl);
+    currentHls.attachMedia(video);
+    currentHls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+  } else {
+    video.src = bestUrl;
+    video.play();
+  }
+
+  // Quality switcher
+  document.querySelectorAll(".quality-btn").forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll(".quality-btn").forEach(b=>b.classList.remove("active"));
+      btn.classList.add("active");
+      const q = btn.dataset.q;
+      const newUrl = urls[q] || urls.original || bestUrl;
+      if(currentHls){
+        currentHls.destroy();
+        currentHls = new Hls();
+        currentHls.loadSource(newUrl);
+        currentHls.attachMedia(video);
+      } else {
+        video.src = newUrl;
+      }
+      video.play();
+      document.getElementById("currentQuality").textContent = q.toUpperCase();
+    };
+  });
+
+  // Sidebar
+  const others = allModels.filter(x => x.id !== model.id).slice(0,16);
+  sidebar.innerHTML = "";
+  others.forEach(m => {
+    const div = document.createElement("div"); div.className = "side-card";
+    div.onclick = () => openPlayer(m);
+    const flag = m.modelsCountry ? `https://flagcdn.com/24x18/${m.modelsCountry.toLowerCase()}.png` : "";
+    div.innerHTML = `
+      <img class="side-thumb" src="${m.snapshotUrl||m.widgetPreviewUrl||''}" onerror="this.src='https://via.placeholder.com/180x101'">
+      <div class="side-info">
+        <div class="side-name">${m.username}</div>
+        <div class="side-meta">${flag?`<img src="${flag}">`:''} ${m.viewersCount||0} watching</div>
+      </div>
+    `;
+    sidebar.appendChild(div);
+  });
+}
+
+function closePlayer(){
+  if(currentHls){ currentHls.destroy(); currentHls = null; }
+  document.getElementById("mainVideo").pause();
+  document.getElementById("player").style.display = "none";
+  document.getElementById("sidebar").style.display = "none";
+}
+
+document.getElementById("closePlayer").onclick = closePlayer;
+document.getElementById("go").onclick = () => {
+  let q = document.getElementById("q").value.trim().toLowerCase();
+  if(q){ currentTag = q.includes("/") ? q : "girls/" + q.replace(/\s+/g,""); page=1; load(true); }
+};
+document.getElementById("q").addEventListener("keypress", e => { if(e.key==="Enter") document.getElementById("go").click(); });
+document.getElementById("randomBtn").onclick = () => {
+  currentTag = hotTags[Math.floor(Math.random()*hotTags.length)];
+  page = 1; load(true);
+};
+
+window.addEventListener("scroll", () => {
+  if(window.innerHeight + window.scrollY >= document.body.offsetHeight - 1500 && !loading){
+    load();
+  }
+});
+
+initTags();
+load(true);
+</script>
+</body>
+</html>
