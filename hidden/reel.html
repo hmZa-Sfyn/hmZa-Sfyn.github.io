@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LiveReels • Random Hot Live Cams</title>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<style>
+  :root{--pink:#ff006e;--purple:#9d00ff;--bg:#000}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:white;font-family:system-ui,sans-serif;overflow:hidden;height:100vh;display:flex;flex-direction:column}
+  
+  #reelContainer{
+    flex:1;
+    position:relative;
+    overflow:hidden;
+    touch-action:pan-y;
+  }
+  .reel{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#000;
+    opacity:0;
+    transition:opacity .6s;
+  }
+  .reel.active{opacity:1;z-index:2}
+  video{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+  }
+
+  /* Bottom Info Bar */
+  .info-bar{
+    position:absolute;
+    bottom:0;
+    left:0;
+    right:0;
+    padding:40px 20px 100px;
+    background:linear-gradient(transparent,#000);
+    z-index:10;
+    pointer-events:none;
+  }
+  .username{
+    font-size:28px;
+    font-weight:900;
+    margin-bottom:8px;
+    text-shadow:0 2px 20px #000;
+  }
+  .meta{
+    font-size:18px;
+    opacity:0.9;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    text-shadow:0 2px 10px #000;
+  }
+
+  /* Controls */
+  .controls{
+    position:absolute;
+    top:20px;
+    right:20px;
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+    z-index:20;
+  }
+  .btn{
+    width:56px;
+    height:56px;
+    background:rgba(255,255,255,.15);
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    backdrop-filter:blur(10px);
+    cursor:pointer;
+    font-size:24px;
+    transition:.3s;
+  }
+  .btn:hover{background:var(--pink);transform:scale(1.1)}
+
+  .loading{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:24px;
+    background:#000;
+    z-index:100;
+  }
+
+  /* Mobile optimizations */
+  @media(max-width:768px){
+    .username{font-size:24px}
+    .meta{font-size:16px}
+    .controls{top:10px;right:10px}
+    .btn{width:50px;height:50px;font-size:20px}
+  }
+</style>
+</head>
+<body>
+
+<div id="reelContainer">
+  <div class="loading">Finding hot live girl...</div>
+</div>
+
+<div class="controls">
+  <div class="btn" id="muteBtn">Sound On</div>
+  <div class="btn" id="pipBtn">PiP</div>
+  <div class="btn" id="miniBtn">Mini</div>
+  <div class="btn" id="randomBtn">Next</div>
+</div>
+
+<div class="info-bar">
+  <div class="username" id="username">Loading...</div>
+  <div class="meta" id="meta">Loading...</div>
+</div>
+
+<script>
+const API = "https://go.mnaspm.com/api/models";
+let models = [];
+let currentIndex = 0;
+let currentHls = null;
+let isMuted = true;
+
+const container = document.getElementById("reelContainer");
+const usernameEl = document.getElementById("username");
+const metaEl = document.getElementById("meta");
+const loadingEl = document.querySelector(".loading");
+
+// Fetch random hot girls
+async function loadModels() {
+  try {
+    const res = await fetch(`${API}?landing=WidgetV4Universal&tag=girls/japanese&limit=100`);
+    const data = await res.json();
+    models = data.models.filter(m => m.stream?.urls?.original || m.stream?.urls?.["1080p"]);
+    if (models.length === 0) throw "No streams";
+    loadingEl.remove();
+    playRandom();
+  } catch(e) {
+    loadingEl.textContent = "No connection — try refresh";
+  }
+}
+
+// Get best stream URL
+function getStream(m) {
+  const u = m.stream?.urls || {};
+  return u.original || u["1080p"] || u["720p"] || u["480p"];
+}
+
+// Create and play a reel
+function playModel(model) {
+  // Clear old
+  container.innerHTML = '<div class="loading">Switching...</div>';
+  if (currentHls) { currentHls.destroy(); currentHls = null; }
+
+  const reel = document.createElement("div");
+  reel.className = "reel active";
+  const video = document.createElement("video");
+  video.muted = isMuted;
+  video.playsInline = true;
+  video.autoplay = true;
+  reel.appendChild(video);
+  container.appendChild(reel);
+
+  const url = getStream(model);
+  if (Hls.isSupported()) {
+    currentHls = new Hls();
+    currentHls.loadSource(url);
+    currentHls.attachMedia(video);
+    currentHls.on(Hls.Events.MANIFEST_PARSED, () => {
+      video.play();
+      document.querySelector(".loading")?.remove();
+    });
+  } else {
+    video.src = url;
+    video.play();
+    document.querySelector(".loading")?.remove();
+  }
+
+  // Update info
+  const flag = model.modelsCountry ? `https://flagcdn.com/48x36/${model.modelsCountry.toLowerCase()}.png` : "";
+  usernameEl.textContent = model.username || "Hot Girl";
+  metaEl.innerHTML = `
+    ${flag ? `<img src="${flag}" style="height:20px;border-radius:4px">` : ''}
+    ${(model.viewersCount||0).toLocaleString()} watching • LIVE
+  `;
+}
+
+// Play random girl
+function playRandom() {
+  if (models.length === 0) return;
+  currentIndex = Math.floor(Math.random() * models.length);
+  playModel(models[currentIndex]);
+}
+
+// Next girl
+function nextGirl() {
+  currentIndex = (currentIndex + 1) % models.length;
+  playModel(models[currentIndex]);
+}
+
+// Controls
+document.getElementById("randomBtn").onclick = nextGirl;
+
+document.getElementById("muteBtn").onclick = () => {
+  isMuted = !isMuted;
+  document.querySelector("video")?.muted = isMuted;
+  document.getElementById("muteBtn").textContent = isMuted ? "Sound On" : "Sound Off";
+};
+
+document.getElementById("pipBtn").onclick = () => {
+  document.querySelector("video")?.requestPictureInPicture();
+};
+
+document.getElementById("miniBtn").onclick = () => {
+  const v = document.querySelector("video");
+  const stream = v.captureStream?.() || v.mozCaptureStream?.();
+  if (stream) {
+    const mini = document.createElement("video");
+    mini.srcObject = stream;
+    mini.muted = v.muted;
+    mini.autoplay = true;
+    mini.style.cssText = "position:fixed;bottom:20px;right:20px;width:360px;height:640px;object-fit:cover;border-radius:16px;box-shadow:0 10px 40px #000;z-index:9999;border:4px solid var(--pink);";
+    mini.onclick = () => mini.remove();
+    document.body.appendChild(mini);
+  }
+};
+
+// Keyboard & Scroll
+document.addEventListener("keydown", e => {
+  if (e.key === " " || e.key === "ArrowDown" || e.key === "ArrowRight") {
+    e.preventDefault();
+    nextGirl();
+  }
+});
+
+// Touch swipe
+let touchStartY = 0;
+container.addEventListener("touchstart", e => touchStartY = e.touches[0].clientY);
+container.addEventListener("touchend", e => {
+  const diff = touchStartY - e.changedTouches[0].clientY;
+  if (Math.abs(diff) > 100) nextGirl();
+});
+
+// Mouse wheel
+container.addEventListener("wheel", e => {
+  if (e.deltaY > 30) nextGirl();
+});
+
+// Start
+loadModels();
+</script>
+</body>
+</html>
