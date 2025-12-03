@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>LiveHub Reels • 1080p Live Streams</title>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background: #000;
+      color: white;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      position: relative;
+    }
+    #playerContainer {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: #000;
+    }
+    #videoPlayer {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 24px;
+      background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .stream-info {
+      font-size: 22px;
+      font-weight: 700;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.8);
+    }
+    .controls {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+    .btn {
+      background: rgba(255,255,255,0.15);
+      border: none;
+      color: white;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 20px;
+      backdrop-filter: blur(10px);
+    }
+    .btn:hover {
+      background: rgba(255,0,110,0.8);
+    }
+    #searchBar {
+      position: absolute;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.6);
+      padding: 8px 16px;
+      border-radius: 50px;
+      display: flex;
+      gap: 10px;
+      backdrop-filter: blur(10px);
+      z-index: 20;
+    }
+    #searchInput {
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 16px;
+      outline: none;
+      width: 200px;
+    }
+    #searchInput::placeholder {
+      color: #aaa;
+    }
+    .tag {
+      background: #ff006e;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 14px;
+      margin-top: 6px;
+      display: inline-block;
+    }
+    .loading {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #888;
+      font-size: 20px;
+      z-index: 5;
+    }
+  </style>
+</head>
+<body>
+
+<div id="playerContainer">
+  <video id="videoPlayer" playsinline autoplay muted></video>
+  <div class="loading" id="loading">Loading next stream...</div>
+  <div id="searchBar">
+    <input type="text" id="searchInput" placeholder="Search: teen, milf, asian..." />
+    <button class="btn" id="searchBtn"><i class="fas fa-search"></i></button>
+    <button class="btn" id="randomBtn"><i class="fas fa-random"></i></button>
+  </div>
+  <div class="overlay">
+    <div class="stream-info" id="streamUsername">Loading...</div>
+    <div class="tag" id="streamTag">LIVE • 1080p</div>
+    <div class="controls">
+      <button class="btn" id="muteBtn"><i class="fas fa-volume-mute"></i></button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = "https://go.mnaspm.com/api/models";
+let currentHls = null;
+let currentTag = "girls/japanese";
+let isMuted = true;
+let isLoading = false;
+
+const video = document.getElementById("videoPlayer");
+const usernameEl = document.getElementById("streamUsername");
+const muteBtn = document.getElementById("muteBtn");
+const searchInput = document.getElementById("searchInput");
+const searchBtn = document.getElementById("searchBtn");
+const randomBtn = document.getElementById("randomBtn");
+const loadingEl = document.getElementById("loading");
+
+// Mute toggle
+muteBtn.onclick = () => {
+  isMuted = !isMuted;
+  video.muted = isMuted;
+  muteBtn.innerHTML = isMuted ? '<i class="fas fa-volume-mute"></i>' : '<i class="fas fa-volume-up"></i>';
+};
+
+// Fetch a single random matching model
+async function fetchRandomModel(tag = currentTag) {
+  const params = new URLSearchParams({
+    landing: "WidgetV4Universal",
+    tag: tag,
+    quality: "1080p",
+    limit: "10", // fetch 10 to pick 1 randomly
+    page: "1"
+  });
+  const res = await fetch(`${API}?${params}`);
+  const data = await res.json();
+  const models = data.models || [];
+  if (models.length === 0) throw new Error("No streams");
+  return models[Math.floor(Math.random() * models.length)];
+}
+
+function getStreamUrl(model) {
+  const u = model.stream?.urls || {};
+  return u.original || u["1080p"] || u["720p"] || u["480p"] || null;
+}
+
+async function loadStream(tag = currentTag) {
+  if (isLoading) return;
+  isLoading = true;
+  loadingEl.style.display = "block";
+
+  try {
+    const model = await fetchRandomModel(tag);
+    const url = getStreamUrl(model);
+    if (!url) throw new Error("No stream URL");
+
+    usernameEl.textContent = model.username || "Live";
+    document.getElementById("streamTag").textContent = `LIVE • ${model.stream?.urls?.original ? '1080p' : 'HD'}`;
+
+    // Clean up previous HLS
+    if (currentHls) {
+      currentHls.destroy();
+      currentHls = null;
+    }
+
+    video.pause();
+    video.removeAttribute("src");
+    video.load();
+
+    if (Hls.isSupported() && url.includes(".m3u8")) {
+      currentHls = new Hls({ maxBufferLength: 10 });
+      currentHls.loadSource(url);
+      currentHls.attachMedia(video);
+      currentHls.on(Hls.Events.MANIFEST_PARSED, () => {
+        video.muted = isMuted;
+        video.play().catch(() => {});
+        isLoading = false;
+        loadingEl.style.display = "none";
+      });
+    } else {
+      video.src = url;
+      video.muted = isMuted;
+      video.play().catch(() => {});
+      isLoading = false;
+      loadingEl.style.display = "none";
+    }
+  } catch (e) {
+    console.error("Failed to load stream", e);
+    usernameEl.textContent = "No stream available";
+    loadingEl.style.display = "none";
+    isLoading = false;
+    // Retry after 2s
+    setTimeout(() => loadStream(tag), 2000);
+  }
+}
+
+// Scroll or wheel to next stream
+let lastScroll = 0;
+window.addEventListener("wheel", (e) => {
+  if (isLoading) return;
+  const now = Date.now();
+  if (now - lastScroll > 800) { // debounce
+    lastScroll = now;
+    loadStream(currentTag);
+  }
+});
+
+// Also support touch swipe (basic)
+let startY = 0;
+document.addEventListener("touchstart", e => { startY = e.touches[0].clientY; });
+document.addEventListener("touchend", e => {
+  if (isLoading) return;
+  const endY = e.changedTouches[0].clientY;
+  if (startY - endY > 80) { // swipe up
+    loadStream(currentTag);
+  }
+});
+
+// Search
+searchBtn.onclick = () => {
+  const q = searchInput.value.trim().toLowerCase();
+  if (q) {
+    currentTag = "girls/" + q.replace(/\s+/g, "");
+    loadStream(currentTag);
+  }
+};
+
+searchInput.addEventListener("keypress", e => {
+  if (e.key === "Enter") searchBtn.click();
+});
+
+// Random (any category)
+const allTags = ["japanese","asian","teen","milf","squirt","anal","bigboobs","latina","ebony","blonde"];
+randomBtn.onclick = () => {
+  const randomCat = allTags[Math.floor(Math.random() * allTags.length)];
+  currentTag = "girls/" + randomCat;
+  loadStream(currentTag);
+};
+
+// Initial load
+loadStream(currentTag);
+</script>
+</body>
+</html>

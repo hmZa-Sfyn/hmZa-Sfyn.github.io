@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LiveHub Pro • 1080p Live Cams 2025</title>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<style>
+  :root{--p:#ff006e;--pu:#9d00ff;--bg:#0a0a0a;--side:#0f0f0f;--card:#111}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:white;font-family:'Segoe UI',sans-serif;display:flex;min-height:100vh;overflow-x:hidden}
+  #sidebar{width:260px;background:var(--side);position:fixed;top:0;bottom:0;overflow-y:auto;padding:20px 0;border-right:1px solid #333;z-index:10}
+  .logo{padding:20px;font-size:32px;font-weight:900;background:linear-gradient(90deg,var(--p),var(--pu));-webkit-background-clip:text;color:transparent;text-align:center}
+  .nav-item{display:flex;align-items:center;gap:18px;padding:14px 24px;cursor:pointer;color:#aaa;transition:.3s}
+  .nav-item:hover,.nav-item.active{background:#1a1a1a;color:white}
+  .nav-item i{width:24px;text-align:center}
+  .quick-tags{padding:20px 16px;border-top:1px solid #333}
+  .quick-title{padding:0 16px 12px;color:var(--p);font-weight:700;font-size:14px;text-transform:uppercase}
+  .tag-btn{display:block;padding:12px 20px;background:#1a1a1a;border-radius:12px;margin-bottom:8px;font-weight:600;transition:.3s;cursor:pointer}
+  .tag-btn:hover{background:var(--p);transform:translateX(8px)}
+  main{margin-left:260px;flex:1;padding:24px}
+  .topbar{display:flex;align-items:center;gap:16px;margin-bottom:30px;flex-wrap:wrap}
+  .search{flex:1;max-width:600px;display:flex;background:#1a1a1a;border-radius:50px;overflow:hidden;border:2px solid #444}
+  #q{flex:1;padding:16px 24px;background:transparent;border:none;color:white;font-size:16px;outline:none}
+  #go{padding:0 32px;background:linear-gradient(45deg,var(--p),var(--pu));border:none;color:white;font-weight:bold;cursor:pointer}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:24px}
+  
+  /* Multi-View Grid — FIXED: no scroll, equal size */
+  #multiViewGrid{
+    display:none;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap:12px;
+    height: calc(100vh - 120px); /* account for topbar padding */
+    margin-top: 10px;
+  }
+  .multi-slot{
+    background:#000;
+    position:relative;
+    border-radius:12px;
+    overflow:hidden;
+    cursor:pointer;
+    aspect-ratio: 16/9; /* enforce consistent ratio */
+  }
+  .multi-video{width:100%;height:100%;object-fit:cover;background:#000;}
+  .multi-placeholder{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#555;font-size:16px;text-align:center;padding:16px;
+  }
+  .multi-name{
+    position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.7);padding:6px 12px;font-size:13px;font-weight:bold;
+  }
+  .multi-swap-btn{
+    position:absolute;top:8px;right:8px;background:var(--p);color:white;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;z-index:5;
+  }
+
+  .card{background:var(--card);border-radius:18px;overflow:hidden;cursor:pointer;transition:transform .4s,box-shadow .4s;position:relative}
+  .card:hover{transform:translateY(-12px);box-shadow:0 20px 50px rgba(255,0,110,.4)}
+  .thumb-wrap{position:relative;width:100%;aspect-ratio:16/9;background:#000;overflow:hidden}
+  .thumb,.preview-video{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+  .thumb{transition:opacity .8s;z-index:1}
+  .preview-video{opacity:0;transition:opacity .6s;z-index:2}
+  .card:hover .preview-video{opacity:1}
+  .card:hover .thumb{opacity:0}
+  .live{position:absolute;top:12px;left:12px;background:#ff0033;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:900;z-index:3}
+  .hd{position:absolute;top:12px;right:12px;background:#8b00ff;padding:6px 12px;border-radius:12px;font-size:12px;font-weight:900;z-index:3}
+  .info{padding:16px;z-index:3;background:linear-gradient(to top,rgba(0,0,0,.8),transparent)}
+  .name{font-size:18px;font-weight:700;margin-bottom:6px}
+  .meta{color:#ccc;font-size:14px;display:flex;align-items:center;gap:8px}
+
+  /* Fullscreen Player */
+  #player{position:fixed;inset:0;background:#000;z-index:999;display:none;flex-direction:column}
+  #mainVideo{flex:1;background:black;width:100%;height:100%}
+  .controls{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.8);padding:14px 30px;border-radius:50px;display:flex;gap:20px;align-items:center;backdrop-filter:blur(10px)}
+  .btn{width:56px;height:56px;background:rgba(255,255,255,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:22px;transition:.3s}
+  .btn:hover{background:var(--p);transform:scale(1.1)}
+
+  /* Mini Player */
+  #miniPlayer{position:fixed;bottom:24px;right:24px;width:380px;height:214px;border-radius:16px;overflow:hidden;box-shadow:0 10px 40px #000;z-index:998;display:none;border:4px solid var(--p)}
+  #miniClose{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.7);width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:10;font-size:18px}
+
+  /* Now Playing Sidebar */
+  #nowPlayingSidebar{
+    display:none;position:fixed;top:0;right:0;width:320px;height:100vh;background:var(--side);z-index:997;overflow-y:auto;padding:24px 16px;border-left:1px solid #333;box-sizing:border-box;
+  }
+  #nowPlayingSidebar h3{
+    color:var(--p);margin-bottom:20px;font-size:22px;text-align:center;
+  }
+  #nowPlayingSidebar .card{
+    width:100%;margin-bottom:16px;
+  }
+  #closeNowPlaying{position:absolute;top:20px;right:20px;color:#ff5555;cursor:pointer;font-size:22px;}
+
+  /* Replace Stream Modal */
+  #replaceModalOverlay{
+    position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:2000;display:none;align-items:center;justify-content:center;
+  }
+  #replaceModal{
+    background:#151515;width:90%;max-width:800px;max-height:85vh;border-radius:16px;overflow:hidden;display:flex;flex-direction:column;
+  }
+  #replaceModalHeader{
+    padding:18px 24px;background:var(--side);display:flex;justify-content-between;align-items:center;border-bottom:1px solid #333;
+  }
+  #replaceModalTitle{color:var(--p);font-size:20px;font-weight:bold;}
+  #closeReplaceModal{color:#ff5555;font-size:26px;cursor:pointer;font-weight:bold;}
+  #replaceSearch{
+    width:100%;padding:14px 20px;margin:16px 0;background:#1a1a1a;border:none;border-radius:50px;color:white;font-size:16px;
+    outline:none;border:2px solid #444;
+  }
+  #replaceResults{
+    padding:0 20px 20px;overflow-y:auto;flex:1;
+  }
+  #replaceResults .card{
+    width:100%;margin-bottom:14px;
+  }
+  #replaceResults .card .thumb{border-radius:12px;}
+</style>
+</head>
+<body>
+
+<div id="sidebar">
+  <div class="logo">LiveHub Pro</div>
+  <div class="nav-item active" data-tag="girls/japanese">Home</div>
+  <div class="nav-item" id="randomNav">Random Cam</div>
+  <div class="nav-item" id="multiViewNav">Multi-View (6)</div>
+  <div class="quick-tags">
+    <div class="quick-title">Hot Now</div>
+    <div class="tag-btn" data-tag="girls/japanese">Japanese</div>
+    <div class="tag-btn" data-tag="girls/asian">Asian</div>
+    <div class="tag-btn" data-tag="girls/teen">Teen 18+</div>
+    <div class="tag-btn" data-tag="girls/milf">MILF</div>
+    <div class="tag-btn" data-tag="girls/squirt">Squirt</div>
+    <div class="tag-btn" data-tag="girls/anal">Anal</div>
+    <div class="tag-btn" data-tag="girls/bigboobs">Big Boobs</div>
+  </div>
+</div>
+
+<main>
+  <div class="topbar">
+    <div class="search">
+      <input type="text" id="q" placeholder="teen, milf, asian, japanese, anal, squirt...">
+      <button id="go">Search</button>
+    </div>
+    <button id="randomBtn" style="padding:0 28px;background:linear-gradient(45deg,var(--p),var(--pu));border:none;color:white;border-radius:50px;font-weight:bold;cursor:pointer">Random</button>
+  </div>
+  <div class="grid" id="grid"></div>
+  <div id="multiViewGrid"></div>
+</main>
+
+<!-- Fullscreen Player -->
+<div id="player">
+  <video id="mainVideo" playsinline autoplay muted></video>
+  <div class="controls">
+    <div class="btn" id="closePlayer">X</div>
+    <div class="btn" id="pipBtn">PiP</div>
+    <div class="btn" id="dockBtn">Dock</div>
+  </div>
+</div>
+
+<!-- Mini Player -->
+<div id="miniPlayer">
+  <video id="miniVideo" playsinline autoplay muted></video>
+  <div id="miniClose">X</div>
+</div>
+
+<!-- Now Playing Sidebar -->
+<div id="nowPlayingSidebar">
+  <span id="closeNowPlaying">&times;</span>
+  <h3>Now Playing</h3>
+  <div id="nowPlayingList"></div>
+</div>
+
+<!-- Replace Stream Modal -->
+<div id="replaceModalOverlay">
+  <div id="replaceModal">
+    <div id="replaceModalHeader">
+      <div id="replaceModalTitle">Choose a Stream to Replace</div>
+      <div id="closeReplaceModal">&times;</div>
+    </div>
+    <input type="text" id="replaceSearch" placeholder="Search models (e.g., japanese, milf, teen...)">
+    <div id="replaceResults"></div>
+  </div>
+</div>
+
+<script>
+const API = "https://go.mnaspm.com/api/models";
+let currentTag = "girls/japanese";
+let page = 1;
+let loading = false;
+let currentHls = null;
+let activePreviewHls = null;
+let multiViewModels = Array(6).fill(null);
+let multiViewHls = Array(6).fill(null);
+let allAvailableModels = [];
+
+function getThumb(m) {
+  return m.previewUrlThumbBig || m.snapshotUrl || m.widgetPreviewUrl || `https://via.placeholder.com/540x304/111/333?text=${encodeURIComponent(m.username||"LIVE")}`;
+}
+
+function getStream(m) {
+  const u = m.stream?.urls || {};
+  return u.original || u["1080p"] || u["720p"] || u["480p"] || u["240p"];
+}
+
+function createCard(model, isMulti = false) {
+  const card = document.createElement("div");
+  const className = isMulti ? "multi-slot" : "card";
+  card.className = className;
+
+  const flag = model.modelsCountry ? `https://flagcdn.com/32x24/${model.modelsCountry.toLowerCase()}.png` : "";
+  const thumb = getThumb(model);
+  const streamUrl = getStream(model);
+  const has1080p = !!(model.stream?.urls?.["1080p"] || model.stream?.urls?.original);
+  const name = model.username || "Live";
+
+  if (isMulti) {
+    card.innerHTML = `
+      <video class="multi-video" muted playsinline></video>
+      <div class="multi-name">${name}</div>
+      <div class="multi-swap-btn">+</div>
+    `;
+    const video = card.querySelector(".multi-video");
+    loadMultiVideo(video, streamUrl);
+  } else {
+    card.innerHTML = `
+      <div class="thumb-wrap">
+        <img class="thumb" src="${thumb}" loading="lazy">
+        <video class="preview-video" muted playsinline></video>
+      </div>
+      <div class="live">LIVE</div>
+      <div class="hd">${has1080p ? '1080p' : 'HD'}</div>
+      <div class="info">
+        <div class="name">${name}</div>
+        <div class="meta">${flag ? `<img src="${flag}" style="height:15px">` : ''} ${(model.viewersCount||0).toLocaleString()} watching</div>
+      </div>
+    `;
+
+    const video = card.querySelector(".preview-video");
+    card.onmouseenter = () => {
+      if (!streamUrl || video.src) return;
+      if (activePreviewHls) activePreviewHls.destroy();
+      if (Hls.isSupported()) {
+        activePreviewHls = new Hls({ maxBufferLength: 10 });
+        activePreviewHls.loadSource(streamUrl);
+        activePreviewHls.attachMedia(video);
+        activePreviewHls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+      } else {
+        video.src = streamUrl;
+        video.play();
+      }
+    };
+    card.onmouseleave = () => {
+      if (activePreviewHls) {
+        activePreviewHls.destroy();
+        activePreviewHls = null;
+      }
+      video.pause();
+      video.removeAttribute("src");
+      video.load();
+    };
+  }
+
+  card.onclick = (e) => {
+    if (isMulti && e.target.classList.contains("multi-swap-btn")) {
+      openReplacementModal(card);
+      return;
+    }
+    openPlayer(model);
+  };
+
+  return card;
+}
+
+async function fetchAllModelsForReplacement(limit = 100) {
+  const params = new URLSearchParams({
+    landing: "WidgetV4Universal",
+    tag: currentTag,
+    quality: "1080p",
+    limit: limit.toString(),
+    page: "1"
+  });
+  const res = await fetch(`${API}?${params}`);
+  const data = await res.json();
+  return data.models || [];
+}
+
+function renderReplacementResults(models) {
+  const container = document.getElementById("replaceResults");
+  container.innerHTML = "";
+  if (models.length === 0) {
+    container.innerHTML = '<div style="color:#888;text-align:center;padding:30px;">No models found</div>';
+    return;
+  }
+  models.forEach(m => {
+    const card = createCard(m);
+    card.style.cursor = "pointer";
+    card.onclick = () => {
+      const targetSlot = window.replacementTargetSlot;
+      const index = Array.from(document.querySelectorAll('.multi-slot')).indexOf(targetSlot);
+      if (index >= 0) {
+        multiViewModels[index] = m;
+        renderMultiView();
+      }
+      document.getElementById("replaceModalOverlay").style.display = "none";
+    };
+    container.appendChild(card);
+  });
+}
+
+function openReplacementModal(slot) {
+  window.replacementTargetSlot = slot;
+  document.getElementById("replaceModalOverlay").style.display = "flex";
+  document.getElementById("replaceSearch").value = "";
+
+  // Fetch models once (could be cached)
+  fetchAllModelsForReplacement(100).then(models => {
+    allAvailableModels = models;
+    renderReplacementResults(models);
+  });
+}
+
+// Live search in replacement modal
+document.getElementById("replaceSearch").addEventListener("input", (e) => {
+  const term = e.target.value.trim().toLowerCase();
+  if (!term) {
+    renderReplacementResults(allAvailableModels);
+  } else {
+    const filtered = allAvailableModels.filter(m => 
+      (m.username || "").toLowerCase().includes(term) ||
+      (m.tags || []).some(tag => tag.toLowerCase().includes(term))
+    );
+    renderReplacementResults(filtered);
+  }
+});
+
+document.getElementById("closeReplaceModal").onclick = () => {
+  document.getElementById("replaceModalOverlay").style.display = "none";
+};
+
+function loadMultiVideo(video, url) {
+  if (!url) return;
+  if (Hls.isSupported()) {
+    const hls = new Hls({ maxBufferLength: 8 });
+    hls.loadSource(url);
+    hls.attachMedia(video);
+    hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+  } else {
+    video.src = url;
+    video.play();
+  }
+}
+
+function renderMultiView() {
+  const container = document.getElementById("multiViewGrid");
+  container.innerHTML = "";
+  multiViewModels.forEach((model, i) => {
+    const slot = document.createElement("div");
+    if (model) {
+      const card = createCard(model, true);
+      slot.appendChild(card);
+    } else {
+      slot.className = "multi-slot";
+      slot.innerHTML = `<div class="multi-placeholder">Slot ${i+1}<br><small>Click “+” to add stream</small></div>`;
+      slot.onclick = () => openReplacementModal(slot);
+    }
+    container.appendChild(slot);
+  });
+}
+
+async function loadNowPlayingStreams(limit = 5) {
+  const params = new URLSearchParams({
+    landing: "WidgetV4Universal",
+    tag: currentTag,
+    quality: "1080p",
+    limit: limit.toString(),
+    page: "1"
+  });
+  const res = await fetch(`${API}?${params}`);
+  const data = await res.json();
+  return data.models || [];
+}
+
+async function load(reset = false) {
+  if (loading) return;
+  loading = true;
+  const grid = document.getElementById("grid");
+  if (reset) {
+    grid.innerHTML = "<div style='grid-column:1/-1;text-align:center;padding:140px;color:#888;font-size:24px'>Loading 1080p cams...</div>";
+    page = 1;
+  }
+
+  const params = new URLSearchParams({
+    landing: "WidgetV4Universal",
+    tag: currentTag,
+    quality: "1080p",
+    limit: "60",
+    page: page
+  });
+
+  try {
+    const res = await fetch(`${API}?${params}`);
+    const data = await res.json();
+    const models = data.models || [];
+    if (reset) grid.innerHTML = "";
+    models.forEach(m => grid.appendChild(createCard(m)));
+    if (models.length === 60) page++;
+  } catch (e) {
+    grid.innerHTML += `<div style="color:#f66;text-align:center;padding:80px">Failed to load</div>`;
+  }
+  loading = false;
+}
+
+function openPlayer(model) {
+  document.getElementById("nowPlayingSidebar").style.display = "block";
+  loadNowPlayingStreams(5).then(models => {
+    const list = document.getElementById("nowPlayingList");
+    list.innerHTML = "";
+    models.filter(m => m.username !== model.username).forEach(m => {
+      const card = createCard(m);
+      card.style.width = "100%";
+      card.onclick = () => {
+        openPlayer(m);
+      };
+      list.appendChild(card);
+    });
+  });
+
+  document.getElementById("player").style.display = "flex";
+  const video = document.getElementById("mainVideo");
+  const url = getStream(model);
+
+  if (currentHls) currentHls.destroy();
+  if (Hls.isSupported()) {
+    currentHls = new Hls();
+    currentHls.loadSource(url);
+    currentHls.attachMedia(video);
+    currentHls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+  } else {
+    video.src = url;
+    video.play();
+  }
+}
+
+function closePlayer() {
+  if (currentHls) { currentHls.destroy(); currentHls = null; }
+  document.getElementById("mainVideo").pause();
+  document.getElementById("player").style.display = "none";
+  document.getElementById("nowPlayingSidebar").style.display = "none";
+}
+
+// PiP
+document.getElementById("pipBtn").onclick = async () => {
+  const video = document.getElementById("mainVideo");
+  if (document.pictureInPictureElement) await document.exitPictureInPicture();
+  try { await video.requestPictureInPicture(); } catch(e) {}
+};
+
+// Mini Player
+document.getElementById("dockBtn").onclick = () => {
+  closePlayer();
+  const mini = document.getElementById("miniPlayer");
+  const video = document.getElementById("mainVideo");
+  if (video.captureStream) {
+    document.getElementById("miniVideo").srcObject = video.captureStream();
+  }
+  mini.style.display = "block";
+};
+
+document.getElementById("closePlayer").onclick = closePlayer;
+document.getElementById("miniClose").onclick = () => document.getElementById("miniPlayer").style.display = "none";
+document.getElementById("closeNowPlaying").onclick = () => document.getElementById("nowPlayingSidebar").style.display = "none";
+
+// Navigation
+document.querySelectorAll('[data-tag]').forEach(el => {
+  el.onclick = () => {
+    currentTag = el.dataset.tag;
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById("grid").style.display = "grid";
+    document.getElementById("multiViewGrid").style.display = "none";
+  };
+});
+
+document.getElementById("multiViewNav").onclick = () => {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById("multiViewNav").classList.add('active');
+  document.getElementById("grid").style.display = "none";
+  document.getElementById("multiViewGrid").style.display = "grid";
+  loadNowPlayingStreams(6).then(models => {
+    multiViewModels = models.slice(0,6);
+    while (multiViewModels.length < 6) multiViewModels.push(null);
+    renderMultiView();
+  });
+};
+
+document.getElementById("randomNav").onclick = () => document.getElementById("randomBtn").click();
+
+document.getElementById("go").onclick = () => {
+  const q = document.getElementById("q").value.trim();
+  if (q) {
+    currentTag = "girls/" + q.toLowerCase().replace(/\s+/g, "");
+    load(true);
+  }
+};
+
+document.getElementById("q").addEventListener("keypress", e => {
+  if (e.key === "Enter") document.getElementById("go").click();
+});
+
+document.getElementById("randomBtn").onclick = () => {
+  const tags = ["japanese","asian","teen","milf","squirt","anal","bigboobs","latina","ebony"];
+  currentTag = "girls/" + tags[Math.floor(Math.random()*tags.length)];
+  load(true);
+};
+
+window.addEventListener("scroll", () => {
+  if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 1200 && !loading) {
+    load();
+  }
+});
+
+load(true);
+</script>
+</body>
+</html>
