@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StripHub Pro • Live Cams</title>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <style>
+    :root {
+      --primary: #ff006e;
+      --secondary: #9d00ff;
+      --bg: #0f0f0f;
+      --card: #1a1a1a;
+      --text: #fff;
+      --muted: #aaa;
+      --live: #ff0033;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      overflow-x: hidden;
+    }
+
+    header {
+      display: flex;
+      padding: 16px 24px;
+      background: #000;
+      border-bottom: 1px solid #333;
+      gap: 16px;
+      flex-wrap: wrap;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo {
+      font-size: 26px;
+      font-weight: 800;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .controls {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .search-box {
+      flex: 1;
+      max-width: 500px;
+      display: flex;
+      background: #222;
+      border-radius: 50px;
+      overflow: hidden;
+      border: 2px solid #444;
+    }
+    .search-box input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: white;
+      padding: 14px 20px;
+      font-size: 16px;
+      outline: none;
+    }
+    .search-box button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 0 24px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .filter-btn {
+      background: #222;
+      border: 1px solid #444;
+      color: white;
+      padding: 10px 16px;
+      border-radius: 50px;
+      cursor: pointer;
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .live-toggle {
+      background: var(--live);
+      padding: 10px 16px;
+      border-radius: 50px;
+      font-weight: bold;
+    }
+    .live-toggle.off {
+      background: #444;
+    }
+
+    .container {
+      display: flex;
+      min-height: calc(100vh - 85px);
+    }
+
+    aside {
+      width: 280px;
+      background: #151515;
+      padding: 20px 0;
+      border-right: 1px solid #333;
+      overflow-y: auto;
+      position: sticky;
+      top: 85px;
+      height: calc(100vh - 85px);
+    }
+    .nav-section {
+      margin-bottom: 20px;
+    }
+    .nav-title {
+      padding: 0 20px 12px;
+      color: var(--primary);
+      font-size: 14px;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+    .tag-item {
+      padding: 10px 24px;
+      cursor: pointer;
+      transition: 0.2s;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+    }
+    .tag-item:hover {
+      background: #222;
+    }
+    .tag-item.active {
+      background: var(--primary);
+      color: white;
+    }
+    .tag-count {
+      background: #333;
+      color: #aaa;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 12px;
+    }
+
+    main {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 24px;
+    }
+
+    .stream-card {
+      background: var(--card);
+      border-radius: 16px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.3s, box-shadow 0.3s;
+      position: relative;
+    }
+    .stream-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 10px 30px rgba(255,0,110,0.3);
+    }
+    .thumb-container {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: #000;
+    }
+    .thumb {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .badges {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .badge {
+      background: var(--live);
+      color: white;
+      padding: 3px 8px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: bold;
+    }
+    .badge.hd { background: var(--secondary); }
+    .badge.new { background: #00ff99; color: #000; }
+    .badge.vr { background: #ff6600; }
+    .badge.lovense { background: #ff33aa; }
+    .badge.offline { background: #555; }
+
+    .card-info {
+      padding: 16px;
+    }
+    .username {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .country-flag {
+      width: 20px;
+      height: 15px;
+      border-radius: 3px;
+    }
+    .viewers {
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .fav-icon {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(0,0,0,0.6);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #ff5555;
+      z-index: 5;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .stream-card:hover .fav-icon { opacity: 1; }
+
+    #playerModal {
+      position: fixed;
+      inset: 0;
+      background: #000;
+      z-index: 1000;
+      display: none;
+      flex-direction: column;
+    }
+    #playerVideo {
+      flex: 1;
+      width: 100%;
+      height: 100%;
+      background: #000;
+    }
+    .player-controls {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.7);
+      padding: 14px 24px;
+      border-radius: 50px;
+      display: flex;
+      gap: 16px;
+      backdrop-filter: blur(10px);
+    }
+    .ctrl-btn {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.15);
+      color: white;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 18px;
+    }
+    .ctrl-btn:hover { background: var(--primary); }
+
+    .loading {
+      text-align: center;
+      padding: 60px;
+      color: var(--muted);
+    }
+
+    #menuToggle {
+      display: none;
+      background: none;
+      border: none;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    @media (max-width: 992px) {
+      aside { display: none; width: 300px; position: fixed; left: 0; top: 85px; height: calc(100vh - 85px); z-index: 100; }
+      aside.active { display: block; }
+      #menuToggle { display: block; }
+      .container { display: block; }
+      .grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <button id="menuToggle"><i class="fas fa-bars"></i></button>
+  <div class="logo">StripHub Pro</div>
+  <div class="controls">
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Search username..." />
+      <button id="searchBtn"><i class="fas fa-search"></i></button>
+    </div>
+    <div class="live-toggle" id="liveToggle">LIVE ONLY</div>
+    <button class="filter-btn" id="filterBtn">
+      <i class="fas fa-sliders-h"></i> Filters
+    </button>
+  </div>
+</header>
+
+<div class="container">
+  <aside id="sidebar">
+    <div class="nav-section">
+      <div class="nav-title">Quick Access</div>
+      <div class="tag-item" id="favSection">
+        <span><i class="fas fa-heart"></i> Favorites</span>
+      </div>
+      <div class="tag-item" id="allModels">
+        <span><i class="fas fa-users"></i> All Models</span>
+      </div>
+    </div>
+    <!-- Tags loaded here -->
+  </aside>
+
+  <main>
+    <div class="grid" id="streamGrid">
+      <div class="loading">Loading live cams...</div>
+    </div>
+  </main>
+</div>
+
+<div id="playerModal">
+  <video id="playerVideo" playsinline autoplay muted></video>
+  <div class="player-controls">
+    <button class="ctrl-btn" id="closePlayer"><i class="fas fa-times"></i></button>
+    <button class="ctrl-btn" id="pipBtn"><i class="fas fa-photo-video"></i></button>
+    <button class="ctrl-btn" id="mutePlayer"><i class="fas fa-volume-mute"></i></button>
+    <select id="qualitySelect" style="background:#333;color:white;border:none;border-radius:8px;padding:8px;">
+      <option>Auto</option>
+    </select>
+  </div>
+</div>
+
+<script>
+// === APIs ===
+const MODEL_API = "https://stripchat.com/api/front/models";
+const TAG_API = "https://stripchat.com/api/front/models/liveTags";
+const SEARCH_API = "https://stripchat.com/api/front/v4/models/search/group/username";
+let currentHls = null;
+let favorites = JSON.parse(localStorage.getItem('strip_favs_pro_v2') || '[]');
+let currentTag = "girls";
+let isLoading = false;
+let allModels = [];
+let offset = 0;
+let liveOnly = true;
+let searchQuery = "";
+
+// === DOM ===
+const grid = document.getElementById("streamGrid");
+const sidebar = document.getElementById("sidebar");
+const searchInput = document.getElementById("searchInput");
+const searchBtn = document.getElementById("searchBtn");
+const menuToggle = document.getElementById("menuToggle");
+const liveToggle = document.getElementById("liveToggle");
+const allModelsBtn = document.getElementById("allModels");
+const favSection = document.getElementById("favSection");
+const playerModal = document.getElementById("playerModal");
+const playerVideo = document.getElementById("playerVideo");
+const closePlayer = document.getElementById("closePlayer");
+const pipBtn = document.getElementById("pipBtn");
+const mutePlayer = document.getElementById("mutePlayer");
+const qualitySelect = document.getElementById("qualitySelect");
+
+// === UI Setup ===
+menuToggle.onclick = () => sidebar.classList.toggle('active');
+liveToggle.onclick = () => {
+  liveOnly = !liveOnly;
+  liveToggle.textContent = liveOnly ? "LIVE ONLY" : "ALL MODELS";
+  liveToggle.className = `live-toggle ${liveOnly ? '' : 'off'}`;
+  offset = 0;
+  if (searchQuery) {
+    searchModels(searchQuery);
+  } else {
+    fetchModels(currentTag);
+  }
+};
+
+// === API: Fetch Tags ===
+async function fetchTags() {
+  const res = await fetch(`${TAG_API}?primaryTag=girls&withMixedTags=false&isRevised=false`);
+  const data = await res.json();
+  
+  const priorityGroups = ["age", "ethnicity", "bodyType", "hairColor", "allTags", "specials"];
+  const groupOrder = { age:1, ethnicity:2, bodyType:3, hairColor:4, allTags:5, specials:6 };
+
+  const groups = data.liveTagGroups
+    .filter(g => priorityGroups.includes(g.alias))
+    .sort((a, b) => (groupOrder[a.alias] || 99) - (groupOrder[b.alias] || 99));
+
+  let html = '';
+  groups.forEach(group => {
+    html += `<div class="nav-section">
+      <div class="nav-title">${group.alias.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}</div>`;
+    group.tags.forEach(tag => {
+      const count = data.liveTagDetails[tag]?.modelsLive || 0;
+      if (count > 0) {
+        html += `
+          <div class="tag-item" data-tag="${tag}">
+            <span>${tag.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()).replace('Tag', '').replace('Auto ', '')}</span>
+            <span class="tag-count">${count}</span>
+          </div>`;
+      }
+    });
+    html += `</div>`;
+  });
+  sidebar.innerHTML += html;
+
+  document.querySelectorAll('.tag-item[data-tag]').forEach(item => {
+    item.onclick = () => {
+      document.querySelectorAll('.tag-item').forEach(el => el.classList.remove('active'));
+      item.classList.add('active');
+      currentTag = item.dataset.tag;
+      offset = 0;
+      fetchModels(currentTag);
+    };
+  });
+}
+
+// === API: Fetch Models ===
+async function fetchModels(tag = "girls") {
+  if (isLoading) return;
+  isLoading = true;
+  if (offset === 0) grid.innerHTML = '<div class="loading">Loading...</div>';
+
+  const params = new URLSearchParams({
+    removeShows: 'false',
+    recInFeatured: 'true',
+    limit: '24',
+    offset: offset.toString(),
+    primaryTag: 'girls',
+    sortBy: 'stripRanking',
+    nic: 'true',
+    byw: 'false',
+    rcmGrp: 'A',
+    rbCnGr: 'true',
+    rbdCnGr: 'true',
+    prxCnGr: 'true',
+    iem: 'true',
+    mvPrm: 'false',
+    decMb: 'false',
+    ctryTop: 'false',
+    uniq: 'gdpwms65fl01nz2x'
+  });
+
+  if (tag !== "girls") params.set("tags", tag);
+
+  try {
+    const res = await fetch(`${MODEL_API}?${params}`);
+    const data = await res.json();
+    let models = data.models || [];
+
+    if (liveOnly) {
+      models = models.filter(m => m.isLive && m.isOnline);
+    }
+
+    if (offset === 0) grid.innerHTML = '';
+    if (models.length === 0 && offset === 0) {
+      grid.innerHTML = '<div class="loading">No models found</div>';
+    } else {
+      models.forEach(renderStreamCard);
+      offset += 24;
+    }
+  } catch (e) {
+    console.error(e);
+    if (offset === 0) grid.innerHTML = '<div class="loading" style="color:#f55">Failed to load</div>';
+  }
+  isLoading = false;
+}
+
+// === API: Search by Username ===
+async function searchModels(query) {
+  if (!query.trim()) return;
+  searchQuery = query;
+  grid.innerHTML = '<div class="loading">Searching...</div>';
+
+  const params = new URLSearchParams({
+    query: query,
+    primaryTag: 'girls',
+    rcmGrp: 'A',
+    oRcmGrp: 'A',
+    uniq: 'n3oqrahjtlkygb56'
+  });
+
+  try {
+    const res = await fetch(`${SEARCH_API}?${params}`);
+    const data = await res.json();
+    let models = data.models || [];
+
+    if (liveOnly) {
+      models = models.filter(m => m.isLive && m.isOnline);
+    }
+
+    grid.innerHTML = '';
+    if (models.length === 0) {
+      grid.innerHTML = '<div class="loading">No results for "' + query + '"</div>';
+    } else {
+      models.forEach(renderStreamCard);
+    }
+  } catch (e) {
+    console.error(e);
+    grid.innerHTML = '<div class="loading" style="color:#f55">Search failed</div>';
+  }
+}
+
+// === Utils ===
+function buildHlsUrl(base, preset) {
+  const id = base.split('/').pop().split('_')[0];
+  return base.replace(/_\d+p\.m3u8$/, `_${preset}.m3u8`);
+}
+
+function getResolutions(model) {
+  const base = model.hlsPlaylist;
+  if (!base) return [];
+  const presets = model.presets || [];
+  const res = [];
+  if (presets.includes("1080p")) res.push("1080p");
+  if (presets.includes("720p")) res.push("720p");
+  if (presets.includes("480p")) res.push("480p");
+  if (presets.includes("240p")) res.push("240p");
+  return res.length ? res : ["Auto"];
+}
+
+// === Render Card ===
+function renderStreamCard(model) {
+  const isFav = favorites.some(f => f.username === model.username);
+  const isLive = model.isLive && model.isOnline;
+  const resolutions = getResolutions(model);
+  const has1080p = resolutions.includes("1080p");
+  const country = model.country ? model.country.toLowerCase() : '';
+  const flag = country ? `https://flagcdn.com/24x18/${country}.png` : '';
+
+  const badges = [];
+  if (!isLive) {
+    badges.push({ text: "OFFLINE", class: "offline" });
+  } else {
+    if (model.isNew) badges.push({ text: "NEW", class: "new" });
+    if (has1080p) badges.push({ text: "1080p", class: "hd" });
+    else if (model.isHd) badges.push({ text: "HD", class: "hd" });
+    if (model.isVr) badges.push({ text: "VR", class: "vr" });
+    if (model.isLovense) badges.push({ text: "L", class: "lovense" });
+  }
+
+  const card = document.createElement("div");
+  card.className = "stream-card";
+  card.innerHTML = `
+    <div class="thumb-container">
+      <img class="thumb" src="${model.previewUrlThumbSmall || model.avatarUrl || 'https://via.placeholder.com/300x170/333/fff?text=No+Preview'}" onerror="this.src='https://via.placeholder.com/300x170/333/fff?text=No+Preview'" />
+      <div class="badges">
+        ${badges.map(b => `<span class="badge ${b.class}">${b.text}</span>`).join('')}
+      </div>
+      <div class="fav-icon"><i class="fas fa-heart${isFav ? '' : '-alt'}"></i></div>
+    </div>
+    <div class="card-info">
+      <div class="username">
+        ${model.username || 'Unknown'}
+        ${flag ? `<img class="country-flag" src="${flag}" />` : ''}
+      </div>
+      <div class="viewers">${isLive ? (model.viewersCount || 0).toLocaleString() + ' watching' : 'Offline'}</div>
+    </div>
+  `;
+
+  card.querySelector('.fav-icon').onclick = (e) => {
+    e.stopPropagation();
+    const wasFav = favorites.some(f => f.username === model.username);
+    if (wasFav) {
+      favorites = favorites.filter(f => f.username !== model.username);
+    } else {
+      favorites.push(model);
+    }
+    localStorage.setItem('strip_favs_pro_v2', JSON.stringify(favorites));
+    card.querySelector('.fav-icon i').className = `fas fa-heart${wasFav ? '-alt' : ''}`;
+  };
+
+  if (isLive) {
+    card.onclick = () => openPlayer(model);
+  }
+
+  grid.appendChild(card);
+}
+
+// === Player ===
+function openPlayer(model) {
+  playerModal.style.display = "flex";
+  playerVideo.dataset.username = model.username;
+  const resolutions = getResolutions(model);
+  const base = model.hlsPlaylist;
+
+  qualitySelect.innerHTML = '';
+  resolutions.forEach(res => {
+    const opt = document.createElement("option");
+    opt.value = res;
+    opt.textContent = res;
+    qualitySelect.appendChild(opt);
+  });
+
+  if (currentHls) { currentHls.destroy(); currentHls = null; }
+  playerVideo.pause(); playerVideo.removeAttribute("src"); playerVideo.load();
+
+  const url = resolutions[0] === "Auto" ? base : buildHlsUrl(base, resolutions[0]);
+
+  if (Hls.isSupported()) {
+    currentHls = new Hls();
+    currentHls.loadSource(url);
+    currentHls.attachMedia(playerVideo);
+    currentHls.on(Hls.Events.MANIFEST_PARSED, () => playerVideo.play());
+  } else {
+    playerVideo.src = url;
+    playerVideo.play();
+  }
+}
+
+// === Player Controls ===
+closePlayer.onclick = () => {
+  if (currentHls) { currentHls.destroy(); currentHls = null; }
+  playerVideo.pause();
+  playerModal.style.display = "none";
+};
+
+mutePlayer.onclick = () => {
+  playerVideo.muted = !playerVideo.muted;
+  mutePlayer.innerHTML = playerVideo.muted ? '<i class="fas fa-volume-mute"></i>' : '<i class="fas fa-volume-up"></i>';
+};
+
+pipBtn.onclick = async () => {
+  if (document.pictureInPictureElement) {
+    await document.exitPictureInPicture();
+  } else {
+    await playerVideo.requestPictureInPicture();
+  }
+};
+
+qualitySelect.onchange = () => {
+  if (!currentHls) return;
+  const res = qualitySelect.value;
+  const url = res === "Auto" 
+    ? currentHls.url 
+    : buildHlsUrl(currentHls.url, res);
+  currentHls.loadSource(url);
+};
+
+// === Navigation ===
+allModelsBtn.onclick = () => {
+  document.querySelectorAll('.tag-item').forEach(el => el.classList.remove('active'));
+  currentTag = "girls";
+  searchQuery = "";
+  offset = 0;
+  fetchModels("girls");
+};
+
+favSection.onclick = () => {
+  document.querySelectorAll('.tag-item').forEach(el => el.classList.remove('active'));
+  grid.innerHTML = '<div class="loading">Loading favorites...</div>';
+  const liveFavs = liveOnly ? favorites.filter(m => m.isLive && m.isOnline) : favorites;
+  if (liveFavs.length === 0) {
+    grid.innerHTML = '<div class="loading">No favorites</div>';
+  } else {
+    grid.innerHTML = '';
+    liveFavs.forEach(renderStreamCard);
+  }
+};
+
+// === Search ===
+searchBtn.onclick = () => {
+  const q = searchInput.value.trim();
+  if (q) searchModels(q);
+};
+searchInput.addEventListener('keypress', e => {
+  if (e.key === 'Enter') searchBtn.click();
+});
+
+// === Shortcuts ===
+document.addEventListener('keydown', e => {
+  if (e.key === 's' || e.key === 'S') {
+    searchInput.focus();
+  } else if (e.key === 'r' || e.key === 'R') {
+    if (searchQuery) searchModels(searchQuery);
+    else fetchModels(currentTag);
+  } else if (e.key === 'l' || e.key === 'L') {
+    liveToggle.click();
+  }
+});
+
+// === Infinite Scroll ===
+window.addEventListener('scroll', () => {
+  if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 1000 && !isLoading && !searchQuery) {
+    fetchModels(currentTag);
+  }
+});
+
+// === Auto-refresh every 60s ===
+setInterval(() => {
+  if (!searchQuery && !playerModal.style.display) {
+    offset = 0;
+    fetchModels(currentTag);
+  }
+}, 60000);
+
+// === Init ===
+fetchTags().then(() => fetchModels("girls"));
+</script>
+</body>
+</html>
